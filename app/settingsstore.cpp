@@ -7,7 +7,7 @@
 
 namespace {
 
-const int kSchemaVersion = 6;
+const int kSchemaVersion = 7;
 
 QVariantList defaultEqBands()
 {
@@ -74,6 +74,16 @@ void SettingsStore::resetToDefaults()
     m_subFont = QStringLiteral("Inter");
     m_textColor = QStringLiteral("#B8B8B8");
     m_outlineColor = QStringLiteral("#0C0C0C");
+    m_miniPlayerEnabled = true;
+    m_miniTriggerManual = true;
+    m_miniTriggerMinimize = true;
+    m_miniTriggerNavigate = true;
+    m_miniTriggerCloseToMini = true;
+    m_miniAlwaysOnTop = true;
+    m_miniW = 360;
+    m_miniH = 140;
+    m_miniX = -1;
+    m_miniY = -1;
     emit languageChanged();
     emit themeModeChanged();
     emit accentColorChanged();
@@ -84,6 +94,17 @@ void SettingsStore::resetToDefaults()
     emit updateVersionChanged();
     emit eqBandsChanged();
     emit subDelayChanged();
+    emit miniPlayerEnabledChanged();
+    emit miniPlayerTriggerManualChanged();
+    emit miniPlayerTriggerMinimizeChanged();
+    emit miniPlayerTriggerNavigateChanged();
+    emit miniPlayerTriggerCloseToMiniChanged();
+    emit closeToMiniChanged();
+    emit miniPlayerAlwaysOnTopChanged();
+    emit miniPlayerWidthChanged();
+    emit miniPlayerHeightChanged();
+    emit miniPlayerXChanged();
+    emit miniPlayerYChanged();
     qInfo() << "M3 settings: reset to defaults (stub)";
 }
 
@@ -373,6 +394,129 @@ void SettingsStore::setTelemetryEnabled(bool v)
 bool SettingsStore::updateAvailable() const { return m_updateAvailable; }
 QString SettingsStore::updateVersion() const { return m_updateVersion; }
 
+// --- M7 mini-player (appearance.miniPlayer, QSettings-backed, all ON) ---
+bool SettingsStore::miniPlayerEnabled() const { return m_miniPlayerEnabled; }
+void SettingsStore::setMiniPlayerEnabled(bool v)
+{
+    if (m_miniPlayerEnabled == v)
+        return;
+    m_miniPlayerEnabled = v;
+    put(QStringLiteral("m7/miniPlayer/enabled"), v);
+    qInfo() << "M7 settings: miniPlayer/enabled =" << v;
+    emit miniPlayerEnabledChanged();
+}
+
+bool SettingsStore::miniPlayerTriggerManual() const { return m_miniTriggerManual; }
+void SettingsStore::setMiniPlayerTriggerManual(bool v)
+{
+    if (m_miniTriggerManual == v)
+        return;
+    m_miniTriggerManual = v;
+    put(QStringLiteral("m7/miniPlayer/triggers/manual"), v);
+    qInfo() << "M7 settings: miniPlayer/triggers/manual =" << v;
+    emit miniPlayerTriggerManualChanged();
+}
+
+bool SettingsStore::miniPlayerTriggerMinimize() const { return m_miniTriggerMinimize; }
+void SettingsStore::setMiniPlayerTriggerMinimize(bool v)
+{
+    if (m_miniTriggerMinimize == v)
+        return;
+    m_miniTriggerMinimize = v;
+    put(QStringLiteral("m7/miniPlayer/triggers/minimize"), v);
+    qInfo() << "M7 settings: miniPlayer/triggers/minimize =" << v;
+    emit miniPlayerTriggerMinimizeChanged();
+}
+
+bool SettingsStore::miniPlayerTriggerNavigate() const { return m_miniTriggerNavigate; }
+void SettingsStore::setMiniPlayerTriggerNavigate(bool v)
+{
+    if (m_miniTriggerNavigate == v)
+        return;
+    m_miniTriggerNavigate = v;
+    put(QStringLiteral("m7/miniPlayer/triggers/navigate"), v);
+    qInfo() << "M7 settings: miniPlayer/triggers/navigate =" << v;
+    emit miniPlayerTriggerNavigateChanged();
+}
+
+bool SettingsStore::miniPlayerTriggerCloseToMini() const { return m_miniTriggerCloseToMini; }
+void SettingsStore::setMiniPlayerTriggerCloseToMini(bool v)
+{
+    if (m_miniTriggerCloseToMini == v)
+        return;
+    m_miniTriggerCloseToMini = v;
+    put(QStringLiteral("m7/miniPlayer/triggers/closeToMini"), v);
+    put(QStringLiteral("m3/appearance/closeToMini"), v);
+    qInfo() << "M7 settings: miniPlayer/triggers/closeToMini =" << v;
+    emit miniPlayerTriggerCloseToMiniChanged();
+    emit closeToMiniChanged();
+}
+
+bool SettingsStore::closeToMini() const { return m_miniTriggerCloseToMini; }
+void SettingsStore::setCloseToMini(bool v) { setMiniPlayerTriggerCloseToMini(v); }
+
+bool SettingsStore::miniPlayerAlwaysOnTop() const { return m_miniAlwaysOnTop; }
+void SettingsStore::setMiniPlayerAlwaysOnTop(bool v)
+{
+    if (m_miniAlwaysOnTop == v)
+        return;
+    m_miniAlwaysOnTop = v;
+    put(QStringLiteral("m7/miniPlayer/alwaysOnTop"), v);
+    qInfo() << "M7 settings: miniPlayer/alwaysOnTop =" << v;
+    emit miniPlayerAlwaysOnTopChanged();
+}
+
+int SettingsStore::miniPlayerWidth() const { return m_miniW; }
+void SettingsStore::setMiniPlayerWidth(int v)
+{
+    const int clamped = qBound(280, v, 900);
+    if (m_miniW == clamped)
+        return;
+    m_miniW = clamped;
+    put(QStringLiteral("m7/miniPlayer/size/w"), m_miniW);
+    emit miniPlayerWidthChanged();
+}
+
+int SettingsStore::miniPlayerHeight() const { return m_miniH; }
+void SettingsStore::setMiniPlayerHeight(int v)
+{
+    const int clamped = qBound(120, v, 600);
+    if (m_miniH == clamped)
+        return;
+    m_miniH = clamped;
+    put(QStringLiteral("m7/miniPlayer/size/h"), m_miniH);
+    emit miniPlayerHeightChanged();
+}
+
+int SettingsStore::miniPlayerX() const { return m_miniX; }
+void SettingsStore::setMiniPlayerX(int v)
+{
+    if (m_miniX == v)
+        return;
+    m_miniX = v;
+    put(QStringLiteral("m7/miniPlayer/size/x"), m_miniX);
+    emit miniPlayerXChanged();
+}
+
+int SettingsStore::miniPlayerY() const { return m_miniY; }
+void SettingsStore::setMiniPlayerY(int v)
+{
+    if (m_miniY == v)
+        return;
+    m_miniY = v;
+    put(QStringLiteral("m7/miniPlayer/size/y"), m_miniY);
+    emit miniPlayerYChanged();
+}
+
+void SettingsStore::saveMiniPlayerGeometry(int w, int h, int x, int y)
+{
+    setMiniPlayerWidth(w);
+    setMiniPlayerHeight(h);
+    setMiniPlayerX(x);
+    setMiniPlayerY(y);
+    qInfo() << "M7 mini-player geometry saved:" << m_miniW << "x" << m_miniH << "@" << m_miniX << "," << m_miniY;
+}
+
 bool SettingsStore::eqEnabled() const { return m_eqEnabled; }
 void SettingsStore::setEqEnabled(bool v)
 {
@@ -578,6 +722,20 @@ void SettingsStore::loadAll()
     m_outlineColor = s.value(QStringLiteral("m3/subtitles/outlineColor"), m_outlineColor).toString();
     m_lowPowerMode = s.value(QStringLiteral("m5/performance/lowPower"), m_lowPowerMode).toBool();
     m_telemetryEnabled = s.value(QStringLiteral("m6/privacy/telemetry"), m_telemetryEnabled).toBool();
+    // M7 mini-player (all defaults ON; closeToMini mirrors the T4 trigger).
+    m_miniPlayerEnabled = s.value(QStringLiteral("m7/miniPlayer/enabled"), m_miniPlayerEnabled).toBool();
+    m_miniTriggerManual = s.value(QStringLiteral("m7/miniPlayer/triggers/manual"), m_miniTriggerManual).toBool();
+    m_miniTriggerMinimize = s.value(QStringLiteral("m7/miniPlayer/triggers/minimize"), m_miniTriggerMinimize).toBool();
+    m_miniTriggerNavigate = s.value(QStringLiteral("m7/miniPlayer/triggers/navigate"), m_miniTriggerNavigate).toBool();
+    // T4 reads both the namespaced trigger and the legacy Appearance alias.
+    m_miniTriggerCloseToMini = s.value(QStringLiteral("m7/miniPlayer/triggers/closeToMini"),
+                                        s.value(QStringLiteral("m3/appearance/closeToMini"),
+                                                m_miniTriggerCloseToMini)).toBool();
+    m_miniAlwaysOnTop = s.value(QStringLiteral("m7/miniPlayer/alwaysOnTop"), m_miniAlwaysOnTop).toBool();
+    m_miniW = s.value(QStringLiteral("m7/miniPlayer/size/w"), m_miniW).toInt();
+    m_miniH = s.value(QStringLiteral("m7/miniPlayer/size/h"), m_miniH).toInt();
+    m_miniX = s.value(QStringLiteral("m7/miniPlayer/size/x"), m_miniX).toInt();
+    m_miniY = s.value(QStringLiteral("m7/miniPlayer/size/y"), m_miniY).toInt();
 }
 
 void SettingsStore::migrateIfNeeded()
@@ -607,6 +765,31 @@ void SettingsStore::migrateIfNeeded()
                 << "(add privacy/telemetry=false, keep M3/M4/M5 keys)";
         if (!s.contains(QStringLiteral("m6/privacy/telemetry")))
             s.setValue(QStringLiteral("m6/privacy/telemetry"), false);
+    } else if (stored == 6) {
+        qInfo() << "M7 SettingsStore: migrating schema 6 -> 7"
+                << "(add miniPlayer master+triggers+alwaysOnTop+sizeMemory, all ON)";
+        if (!s.contains(QStringLiteral("m7/miniPlayer/enabled")))
+            s.setValue(QStringLiteral("m7/miniPlayer/enabled"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/triggers/manual")))
+            s.setValue(QStringLiteral("m7/miniPlayer/triggers/manual"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/triggers/minimize")))
+            s.setValue(QStringLiteral("m7/miniPlayer/triggers/minimize"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/triggers/navigate")))
+            s.setValue(QStringLiteral("m7/miniPlayer/triggers/navigate"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/triggers/closeToMini")))
+            s.setValue(QStringLiteral("m7/miniPlayer/triggers/closeToMini"), true);
+        if (!s.contains(QStringLiteral("m3/appearance/closeToMini")))
+            s.setValue(QStringLiteral("m3/appearance/closeToMini"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/alwaysOnTop")))
+            s.setValue(QStringLiteral("m7/miniPlayer/alwaysOnTop"), true);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/size/w")))
+            s.setValue(QStringLiteral("m7/miniPlayer/size/w"), 360);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/size/h")))
+            s.setValue(QStringLiteral("m7/miniPlayer/size/h"), 140);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/size/x")))
+            s.setValue(QStringLiteral("m7/miniPlayer/size/x"), -1);
+        if (!s.contains(QStringLiteral("m7/miniPlayer/size/y")))
+            s.setValue(QStringLiteral("m7/miniPlayer/size/y"), -1);
     } else if (stored != 3) {
         qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
                 << "(stub: namespaced keys, no legacy import)";

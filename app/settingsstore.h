@@ -37,6 +37,18 @@ class SettingsStore : public QObject
     Q_PROPERTY(bool telemetryEnabled READ telemetryEnabled WRITE setTelemetryEnabled NOTIFY telemetryEnabledChanged)
     Q_PROPERTY(bool updateAvailable READ updateAvailable NOTIFY updateAvailableChanged)
     Q_PROPERTY(QString updateVersion READ updateVersion NOTIFY updateVersionChanged)
+    // M7 mini-player (appearance.miniPlayer): master + 4 triggers + pin + geometry.
+    Q_PROPERTY(bool miniPlayerEnabled READ miniPlayerEnabled WRITE setMiniPlayerEnabled NOTIFY miniPlayerEnabledChanged)
+    Q_PROPERTY(bool miniPlayerTriggerManual READ miniPlayerTriggerManual WRITE setMiniPlayerTriggerManual NOTIFY miniPlayerTriggerManualChanged)
+    Q_PROPERTY(bool miniPlayerTriggerMinimize READ miniPlayerTriggerMinimize WRITE setMiniPlayerTriggerMinimize NOTIFY miniPlayerTriggerMinimizeChanged)
+    Q_PROPERTY(bool miniPlayerTriggerNavigate READ miniPlayerTriggerNavigate WRITE setMiniPlayerTriggerNavigate NOTIFY miniPlayerTriggerNavigateChanged)
+    Q_PROPERTY(bool miniPlayerTriggerCloseToMini READ miniPlayerTriggerCloseToMini WRITE setMiniPlayerTriggerCloseToMini NOTIFY miniPlayerTriggerCloseToMiniChanged)
+    Q_PROPERTY(bool closeToMini READ closeToMini WRITE setCloseToMini NOTIFY closeToMiniChanged)
+    Q_PROPERTY(bool miniPlayerAlwaysOnTop READ miniPlayerAlwaysOnTop WRITE setMiniPlayerAlwaysOnTop NOTIFY miniPlayerAlwaysOnTopChanged)
+    Q_PROPERTY(int miniPlayerWidth READ miniPlayerWidth WRITE setMiniPlayerWidth NOTIFY miniPlayerWidthChanged)
+    Q_PROPERTY(int miniPlayerHeight READ miniPlayerHeight WRITE setMiniPlayerHeight NOTIFY miniPlayerHeightChanged)
+    Q_PROPERTY(int miniPlayerX READ miniPlayerX WRITE setMiniPlayerX NOTIFY miniPlayerXChanged)
+    Q_PROPERTY(int miniPlayerY READ miniPlayerY WRITE setMiniPlayerY NOTIFY miniPlayerYChanged)
 
     // Audio defaults (EQ + spatial rows).
     Q_PROPERTY(bool eqEnabled READ eqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
@@ -93,6 +105,8 @@ public:
     // M6 auto-update stub: consults checkUpdates, then reports "up to date".
     // Real feed fetch + signature verify + installer relaunch is a follow-up.
     Q_INVOKABLE void checkForUpdates();
+    // M7: persist mini-player geometry in one round-trip (sizeMemory).
+    Q_INVOKABLE void saveMiniPlayerGeometry(int w, int h, int x, int y);
 
     // Typed getters/setters.
     QString language() const;
@@ -123,6 +137,30 @@ public:
 
     bool updateAvailable() const;
     QString updateVersion() const;
+
+    // M7 mini-player typed accessors (all defaults ON per 04-mini-player.md).
+    bool miniPlayerEnabled() const;
+    void setMiniPlayerEnabled(bool v);
+    bool miniPlayerTriggerManual() const;
+    void setMiniPlayerTriggerManual(bool v);
+    bool miniPlayerTriggerMinimize() const;
+    void setMiniPlayerTriggerMinimize(bool v);
+    bool miniPlayerTriggerNavigate() const;
+    void setMiniPlayerTriggerNavigate(bool v);
+    bool miniPlayerTriggerCloseToMini() const;
+    void setMiniPlayerTriggerCloseToMini(bool v);
+    bool closeToMini() const;
+    void setCloseToMini(bool v);
+    bool miniPlayerAlwaysOnTop() const;
+    void setMiniPlayerAlwaysOnTop(bool v);
+    int miniPlayerWidth() const;
+    void setMiniPlayerWidth(int v);
+    int miniPlayerHeight() const;
+    void setMiniPlayerHeight(int v);
+    int miniPlayerX() const;
+    void setMiniPlayerX(int v);
+    int miniPlayerY() const;
+    void setMiniPlayerY(int v);
 
     bool eqEnabled() const;
     void setEqEnabled(bool v);
@@ -174,6 +212,18 @@ signals:
     void telemetryEnabledChanged();
     void updateAvailableChanged();
     void updateVersionChanged();
+    // M7 mini-player notifications (closeToMini mirrors triggerCloseToMini).
+    void miniPlayerEnabledChanged();
+    void miniPlayerTriggerManualChanged();
+    void miniPlayerTriggerMinimizeChanged();
+    void miniPlayerTriggerNavigateChanged();
+    void miniPlayerTriggerCloseToMiniChanged();
+    void closeToMiniChanged();
+    void miniPlayerAlwaysOnTopChanged();
+    void miniPlayerWidthChanged();
+    void miniPlayerHeightChanged();
+    void miniPlayerXChanged();
+    void miniPlayerYChanged();
     void eqEnabledChanged();
     void eqPresetChanged();
     void eqBandsChanged();
@@ -233,5 +283,17 @@ private:
     QString m_textColor = QStringLiteral("#B8B8B8");
     QString m_outlineColor = QStringLiteral("#0C0C0C");
 
-    int m_schemaVersion = 5;
+    // M7 mini-player state (appearance.miniPlayer, all defaults ON).
+    bool m_miniPlayerEnabled = true;
+    bool m_miniTriggerManual = true;
+    bool m_miniTriggerMinimize = true;
+    bool m_miniTriggerNavigate = true;
+    bool m_miniTriggerCloseToMini = true;
+    bool m_miniAlwaysOnTop = true;
+    int m_miniW = 360;
+    int m_miniH = 140;
+    int m_miniX = -1;
+    int m_miniY = -1;
+
+    int m_schemaVersion = 7;
 };
