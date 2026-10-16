@@ -97,6 +97,8 @@ qt_add_qml_module(vlc-redesign-m0
     ToastHost.qml
     ErrorDialog.qml
     NetworkOpenDialog.qml
+    MiniPlayerView.qml
+    MiniPlayerControls.qml
     Ds/Theme.qml
   RESOURCES
     icons/two-tone/prev.svg

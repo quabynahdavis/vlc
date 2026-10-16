@@ -19,6 +19,7 @@ Rectangle {
     signal maximizeClicked
     signal fullscreenClicked
     signal closeClicked
+    signal compactClicked
 
     RowLayout {
         anchors.fill: parent
@@ -138,6 +139,30 @@ Rectangle {
         }
 
         // Window hints (wired in Main.qml).
+        ToolButton {
+            text: "⤢"
+            font.pixelSize: 12
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Mini player (Ctrl+M)")
+            Accessible.description: qsTr("Collapse to the compact mini player")
+            ToolTip.text: qsTr("Mini player (Ctrl+M)")
+            ToolTip.visible: hovered
+            onClicked: bar.compactClicked()
+            contentItem: Text {
+                text: parent.text
+                color: Ds.Theme.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle {
+                color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
+                radius: Ds.Theme.radiusSmall
+            }
+        }
         ToolButton {
             text: "–"
             font.pixelSize: 14

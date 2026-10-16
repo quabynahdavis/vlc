@@ -88,6 +88,190 @@ ApplicationWindow {
     property bool effectsOpen: false
     property bool subtitlesOpen: false
 
+    // ---- M7 mini-player state ----
+    // Shares the SAME MediaPlayer (`player`) — no second pipeline, no
+    // re-buffer; the mini only mirrors time/volume/title and delegates
+    // commands. Restore is lossless by construction (position delta ~0ms).
+    property bool miniPlayerOpen: false
+    property string miniPlayerReason: ""
+    property bool miniForceQuit: false
+    property int lastMainVisibility: Window.Windowed
+    // Position snapshot (ms) at enter-mini; restore logs the delta
+    // (must stay within ±250ms — same instance, so no seek is needed).
+    property real miniEnterMs: 0
+    readonly property bool hasVideo: root.hasMedia
+    readonly property string mediaTitle: {
+        if (!root.hasMedia)
+            return root.isPlaying ? qsTr("Preview — demo playback") : qsTr("No media");
+        var s = root.playerSourceString();
+        try {
+            s = decodeURIComponent(s);
+        } catch (e) {
+        }
+        var parts = s.split("/");
+        return parts.length > 0 ? parts[parts.length - 1] : s;
+    }
+    property string episodeText: ""
+
+    signal routeChanged(string route)
+
+    function playerSourceString() {
+        try {
+            return player.source.toString();
+        } catch (e) {
+            return "";
+        }
+    }
+
+    // M7 settings guards (SettingsStore always exists at runtime via
+    // main.cpp; try/catch keeps qmllint + isolated loads safe, default ON).
+    function miniEnabled() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.miniPlayerEnabled;
+        } catch (e) {
+        }
+        return true;
+    }
+    function trigManual() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.miniPlayerTriggerManual;
+        } catch (e) {
+        }
+        return true;
+    }
+    function trigMinimize() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.miniPlayerTriggerMinimize;
+        } catch (e) {
+        }
+        return true;
+    }
+    function trigNavigate() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.miniPlayerTriggerNavigate;
+        } catch (e) {
+        }
+        return true;
+    }
+    function trigCloseToMini() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.miniPlayerTriggerCloseToMini;
+        } catch (e) {
+        }
+        return true;
+    }
+
+    // M7 T1/T2/T3/T4 entry: hide-or-keep main per reason, show the mini.
+    function enterMiniPlayer(reason) {
+        if (root.miniPlayerOpen)
+            return;
+        if (!root.miniEnabled()) {
+            console.log("M7 mini-player blocked: master toggle OFF");
+            return;
+        }
+        if (reason === "manual" && !root.trigManual()) {
+            console.log("M7 mini-player blocked: manual trigger OFF");
+            return;
+        }
+        if (reason === "minimize" && !root.trigMinimize()) {
+            console.log("M7 mini-player blocked: minimize trigger OFF");
+            return;
+        }
+        if (reason === "navigate" && !root.trigNavigate()) {
+            console.log("M7 mini-player blocked: navigate trigger OFF");
+            return;
+        }
+        if (reason === "close" && !root.trigCloseToMini()) {
+            console.log("M7 mini-player blocked: close-to-mini trigger OFF");
+            return;
+        }
+        try {
+            root.miniEnterMs = root.hasMedia ? player.position : root.demoPosition * 1000;
+        } catch (e) {
+            root.miniEnterMs = 0;
+        }
+        root.miniPlayerOpen = true;
+        root.miniPlayerReason = reason;
+        miniView.triggerReason = root.miniReasonText(reason);
+        // Restore saved geometry (sizeMemory) when valid.
+        try {
+            if (typeof SettingsStore !== "undefined") {
+                miniView.width = SettingsStore.miniPlayerWidth;
+                miniView.height = SettingsStore.miniPlayerHeight;
+                if (SettingsStore.miniPlayerX >= 0 && SettingsStore.miniPlayerY >= 0) {
+                    miniView.x = SettingsStore.miniPlayerX;
+                    miniView.y = SettingsStore.miniPlayerY;
+                }
+            }
+        } catch (e) {
+        }
+        if (reason === "close")
+            root.visible = false;
+        miniView.show();
+        miniView.raise();
+        console.log("M7 enter mini-player (reason:", reason, ")");
+    }
+
+    function miniReasonText(reason) {
+        if (reason === "manual")
+            return qsTr("Mini player — Ctrl+M / View / compact button");
+        if (reason === "minimize")
+            return qsTr("Mini player — minimized during playback");
+        if (reason === "navigate")
+            return qsTr("Mini player — browsing while playing");
+        if (reason === "close")
+            return qsTr("Mini player — close collapsed instead of quit");
+        return qsTr("Mini player");
+    }
+
+    // M7 deactivation: Esc / Restore / double-click → main Player view at
+    // the same position (same instance ⇒ delta ≈ 0ms ≤ ±250ms budget).
+    function restoreFromMini() {
+        if (!root.miniPlayerOpen)
+            return;
+        var nowMs = 0;
+        try {
+            nowMs = root.hasMedia ? player.position : root.demoPosition * 1000;
+        } catch (e) {
+        }
+        var delta = Math.abs(nowMs - root.miniEnterMs);
+        console.log("M7 restore mini-player, position delta ms:", Math.round(delta), "(budget ±250)");
+        root.miniPlayerOpen = false;
+        root.miniPlayerReason = "";
+        miniView.hide();
+        root.visible = true;
+        if (root.lastMainVisibility === Window.Maximized)
+            root.showMaximized();
+        else if (root.lastMainVisibility === Window.FullScreen)
+            root.showFullScreen();
+        else
+            root.showNormal();
+        root.raise();
+        root.currentView = "player";
+        root.routeChanged("player");
+    }
+
+    // M7 explicit quit from the mini (bypasses closeToMini by design).
+    function requestAppQuit() {
+        root.miniForceQuit = true;
+        root.saveMiniGeometry();
+        console.log("M7 quit from mini-player (bypass close-to-mini)");
+        Qt.quit();
+    }
+
+    function saveMiniGeometry() {
+        try {
+            if (typeof SettingsStore !== "undefined" && miniView.visible)
+                SettingsStore.saveMiniPlayerGeometry(miniView.width, miniView.height, miniView.x, miniView.y);
+        } catch (e) {
+        }
+    }
+
     // Demo position when no media is loaded: 00:02:10 of 00:25:40,
     // ticking live while "playing" so the transport stays live-bound.
     property int demoPosition: 130
@@ -268,10 +452,22 @@ ApplicationWindow {
     Shortcut { sequence: "N"; onActivated: root.nextItem() }
     Shortcut { sequence: "R"; onActivated: root.toggleRecord() }
     Shortcut { sequence: "Ctrl+\\"; onActivated: root.toggleHideUI() }
-    Shortcut { sequence: "Ctrl+Q"; onActivated: Qt.quit() }
+    // M7: explicit Ctrl+Q always quits (bypasses closeToMini by design).
+    Shortcut { sequence: "Ctrl+Q"; onActivated: { root.miniForceQuit = true; Qt.quit(); } }
     // M2 view switch: Ctrl+1 Player, Ctrl+2 Library.
     Shortcut { sequence: "Ctrl+1"; onActivated: root.currentView = "player" }
     Shortcut { sequence: "Ctrl+2"; onActivated: root.currentView = "library" }
+    // M7 T1 manual trigger: Ctrl+M toggles the mini-player (View-menu
+    // equivalent lives in the context menu + titlebar compact button).
+    Shortcut {
+        sequence: "Ctrl+M"
+        onActivated: {
+            if (root.miniPlayerOpen)
+                root.restoreFromMini();
+            else
+                root.enterMiniPlayer("manual");
+        }
+    }
     // M3: settings (Ctrl+,), effects (Ctrl+E), subtitles (Ctrl+T) stubs.
     // M5: Ctrl+O opens the network URL stub (mirrors Open Media menu).
     Shortcut { sequence: "Ctrl+,"; onActivated: settingsDialog.openPage("general") }
@@ -307,6 +503,48 @@ ApplicationWindow {
         }
     }
 
+    // ---- M7 trigger handlers (each gated by its own settings toggle) ----
+    // T2 minimize-to-mini: OS minimize event during playback collapses to
+    // the floating mini (main stays minimized; restore re-shows it).
+    // T4 close-to-mini: window X while playing collapses instead of quit.
+    // T3 in-app PiP: route changes away from Player (and the Settings
+    // dialog opening) while video plays spawn the floating mini.
+    onVisibilityChanged: {
+        if (root.visibility === Window.Minimized) {
+            if (root.isPlaying && !root.miniPlayerOpen)
+                root.enterMiniPlayer("minimize");
+        } else if (root.visibility === Window.Maximized
+                   || root.visibility === Window.FullScreen
+                   || root.visibility === Window.Windowed) {
+            root.lastMainVisibility = root.visibility;
+        }
+    }
+    onCurrentViewChanged: {
+        root.routeChanged(root.currentView);
+        if (root.currentView !== "player" && root.isPlaying && root.hasVideo && !root.miniPlayerOpen)
+            root.enterMiniPlayer("navigate");
+    }
+    onClosing: (close) => {
+        if (root.miniForceQuit) {
+            close.accepted = true;
+            return;
+        }
+        if (root.isPlaying && root.miniEnabled() && root.trigCloseToMini() && !root.miniPlayerOpen) {
+            close.accepted = false;
+            root.enterMiniPlayer("close");
+        } else {
+            close.accepted = true;
+        }
+    }
+    Connections {
+        target: settingsDialog
+        function onOpened() {
+            root.routeChanged("settings");
+            if (root.isPlaying && root.hasVideo && !root.miniPlayerOpen)
+                root.enterMiniPlayer("navigate");
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -331,6 +569,12 @@ ApplicationWindow {
                     root.showFullScreen();
             }
             onCloseClicked: root.close()
+            onCompactClicked: {
+                if (root.miniPlayerOpen)
+                    root.restoreFromMini();
+                else
+                    root.enterMiniPlayer("manual");
+            }
         }
 
         RowLayout {
@@ -619,8 +863,68 @@ ApplicationWindow {
         onNextRequested: root.nextItem()
         onRecordRequested: root.toggleRecord()
         onHideUIRequested: root.toggleHideUI()
+        onMiniPlayerRequested: {
+            if (root.miniPlayerOpen)
+                root.restoreFromMini();
+            else
+                root.enterMiniPlayer("manual");
+        }
         onNetworkOpenRequested: networkDialog.openDialog()
-        onQuitRequested: Qt.quit()
+        onQuitRequested: {
+            root.miniForceQuit = true;
+            Qt.quit();
+        }
+    }
+
+    // M7 floating mini-player: binds the SAME player state (no re-buffer);
+    // all commands delegate to root handlers. Restores lossless on
+    // double-click / Esc / Restore; Quit bypasses closeToMini.
+    MiniPlayerView {
+        id: miniView
+        playing: root.isPlaying
+        elapsedText: root.formatTime(root.elapsedSec)
+        totalText: root.formatTime(root.totalSec)
+        scrubFrom: 0
+        scrubTo: root.totalSec
+        scrubValue: root.elapsedSec
+        volumeLevel: root.volumeLevel
+        muted: root.muted
+        mediaTitle: root.mediaTitle
+        episodeText: root.episodeText
+        pinned: {
+            try {
+                if (typeof SettingsStore !== "undefined")
+                    return SettingsStore.miniPlayerAlwaysOnTop;
+            } catch (e) {
+            }
+            return true;
+        }
+        onPlayClicked: root.togglePlay()
+        onPrevClicked: root.prevItem()
+        onNextClicked: root.nextItem()
+        onSeekRequested: (seconds) => root.seekTo(seconds)
+        onVolumeRequested: (level) => {
+            root.volumeLevel = level;
+            if (level > 0)
+                root.muted = false;
+        }
+        onMuteToggled: root.muted = !root.muted
+        onPinToggled: {
+            try {
+                if (typeof SettingsStore !== "undefined")
+                    SettingsStore.miniPlayerAlwaysOnTop = !SettingsStore.miniPlayerAlwaysOnTop;
+            } catch (e) {
+            }
+        }
+        onRestoreRequested: root.restoreFromMini()
+        onQuitRequested: root.requestAppQuit()
+        onMiniGeometryChanged: (w, h, x, y) => {
+            try {
+                if (typeof SettingsStore !== "undefined")
+                    SettingsStore.saveMiniPlayerGeometry(w, h, x, y);
+            } catch (e) {
+            }
+        }
     }
 
     // M5 polish overlays: bottom-center toasts, modal error dialog with

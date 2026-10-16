@@ -27,6 +27,7 @@ Popup {
     signal nextRequested
     signal recordRequested
     signal hideUIRequested
+    signal miniPlayerRequested
     signal networkOpenRequested
     signal quitRequested
 
@@ -125,6 +126,14 @@ Popup {
                 label: qsTr("Hide UI")
                 hint: "Ctrl + \\"
                 onClicked: { menu.close(); menu.hideUIRequested(); }
+            }
+            // M7 T1 View-menu equivalent: manual mini-player entry.
+            MenuRow {
+                Layout.fillWidth: true
+                glyph: "⤢"
+                label: qsTr("Mini Player")
+                hint: "Ctrl + M"
+                onClicked: { menu.close(); menu.miniPlayerRequested(); }
             }
 
             Rectangle {
