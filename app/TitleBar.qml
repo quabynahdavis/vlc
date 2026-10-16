@@ -53,6 +53,11 @@ Rectangle {
                 ctx.fillRect(3, 17, 16, 3);
             }
             Component.onCompleted: requestPaint()
+            Connections {
+                target: Ds.Theme
+                function onAccentChanged() { cone.requestPaint(); }
+                function onTextPrimaryChanged() { cone.requestPaint(); }
+            }
         }
 
         // Overflow + layout toggles (stubs; layout grid lands in M2).

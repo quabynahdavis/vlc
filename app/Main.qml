@@ -9,6 +9,8 @@ import "Ds" as Ds
 // stage + single-row transport + right-click context menu + Hide-UI mode.
 // Preserves the M0 MediaPlayer wiring (QtMultimedia preview bound to
 // `initialSource`; libVLC render path lands in a later milestone).
+// M4: ThemeService bindings (Dark/Light/System + accent + iconPack) live
+// here so every Ds.Theme consumer follows SettingsStore + OS scheme.
 ApplicationWindow {
     id: root
     visible: true
@@ -18,6 +20,38 @@ ApplicationWindow {
     minimumHeight: 600
     title: "VLC Media Player"
     color: Ds.Theme.bgApp
+
+    // M4 ThemeService wiring: requested mode/accent from SettingsStore,
+    // system scheme from Application.styleHints (follows OS in System mode).
+    Binding {
+        target: Ds.Theme
+        property: "themeMode"
+        value: {
+            try {
+                if (typeof SettingsStore !== "undefined" && SettingsStore.themeMode)
+                    return SettingsStore.themeMode;
+            } catch (e) {
+            }
+            return "Dark";
+        }
+    }
+    Binding {
+        target: Ds.Theme
+        property: "accentKey"
+        value: {
+            try {
+                if (typeof SettingsStore !== "undefined" && SettingsStore.accentColor)
+                    return SettingsStore.accentColor;
+            } catch (e) {
+            }
+            return "#D37918";
+        }
+    }
+    Binding {
+        target: Ds.Theme
+        property: "systemScheme"
+        value: Application.styleHints.colorScheme
+    }
 
     // Set from main.cpp via setInitialProperties when a CLI arg is given.
     property url initialSource: ""

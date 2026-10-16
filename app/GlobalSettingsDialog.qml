@@ -352,12 +352,69 @@ Dialog {
                                             onClicked: {
                                                 if (dlg.storeAvailable())
                                                     SettingsStore.accentColor = parent.modelData;
-                                                console.log("M3 accent (stub):", parent.modelData);
+                                                console.log("M4 accent:", parent.modelData,
+                                                    "(Player-2 purple / Player-3 pink / Player-4 grey via switch)");
                                             }
                                         }
                                     }
                                 }
                             }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Icon pack"
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            RowLayout {
+                                spacing: 6
+                                Repeater {
+                                    model: Ds.Theme.iconPacks
+                                    delegate: Button {
+                                        required property string modelData
+                                        text: modelData
+                                        checkable: true
+                                        checked: {
+                                            var cur = dlg.storeAvailable() ? SettingsStore.iconPack : "Two-tone";
+                                            return cur === modelData;
+                                        }
+                                        focusPolicy: Qt.NoFocus
+                                        onClicked: {
+                                            if (dlg.storeAvailable())
+                                                SettingsStore.iconPack = modelData;
+                                            console.log("M4 IconTheme pack:", modelData,
+                                                modelData === "Two-tone" ? "(ships)"
+                                                : "(stub: falls back to Two-tone, full bundling + attribution follow-up)");
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: parent.checked ? Ds.Theme.accent : Ds.Theme.textSecondary
+                                            font.pixelSize: 12
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        background: Rectangle {
+                                            implicitWidth: 86
+                                            implicitHeight: 36
+                                            radius: Ds.Theme.radiusMedium
+                                            color: parent.checked ? Ds.Theme.accentPressed : Ds.Theme.bgElevated
+                                            opacity: parent.checked ? 0.55 : 1.0
+                                            border.color: parent.checked ? Ds.Theme.accent : Ds.Theme.border
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Lucide / Phosphor / Material fall back to Two-tone in M4 (full 3-pack bundling + attribution follow-up)."
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
                         }
 
                         Text {

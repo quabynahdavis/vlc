@@ -523,7 +523,7 @@ Rectangle {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: panel.storeAvailable() ? SettingsStore.textColor : "#B8B8B8"
+                                text: panel.storeAvailable() ? SettingsStore.textColor : Ds.Theme.subtitleText.toString().toUpperCase()
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 13
                             }
@@ -566,7 +566,7 @@ Rectangle {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: panel.storeAvailable() ? SettingsStore.outlineColor : "#0C0C0C"
+                                text: panel.storeAvailable() ? SettingsStore.outlineColor : Ds.Theme.subtitleOutline.toString().toUpperCase()
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 13
                             }

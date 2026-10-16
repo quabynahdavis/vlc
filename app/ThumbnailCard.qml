@@ -20,8 +20,7 @@ Item {
     signal playRequested
 
     function tint(i) {
-        var palette = ["#D37918", "#B7C82E", "#3FB950", "#58A6FF",
-                       "#A371F7", "#F778BA", "#FF7B72", "#E08A2E"];
+        var palette = Ds.Theme.artPalette;
         var k = ((i % palette.length) + palette.length) % palette.length;
         return palette[k];
     }
@@ -98,6 +97,11 @@ Item {
                     ctx.fill();
                 }
                 Component.onCompleted: requestPaint()
+                Connections {
+                    target: Ds.Theme
+                    function onAccentChanged() { doodle.requestPaint(); }
+                    function onTextPrimaryChanged() { doodle.requestPaint(); }
+                }
             }
 
             // Ghost episode tag (placeholder-art affordance, no binaries).

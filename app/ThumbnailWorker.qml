@@ -1,4 +1,5 @@
 import QtQuick
+import "Ds" as Ds
 
 // M2 thumbnail worker stub: async prefetch queue in front of
 // LibraryService.requestThumbnail. Real frame decode + SQLite-backed disk
@@ -16,8 +17,7 @@ Item {
     property bool _busy: false
 
     function hintFor(path) {
-        var palette = ["#D37918", "#B7C82E", "#3FB950", "#58A6FF",
-                       "#A371F7", "#F778BA", "#FF7B72", "#E08A2E"];
+        var palette = Ds.Theme.artPalette;
         var h = 0;
         for (var i = 0; i < path.length; ++i)
             h = (h * 31 + path.charCodeAt(i)) % 100000;
