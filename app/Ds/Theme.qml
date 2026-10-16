@@ -119,6 +119,24 @@ QtObject {
     readonly property color success: "#3FB950"
     readonly property color danger: "#F85149"
 
+    // M5 polish tokens: toasts (bottom-center queue), record badge, states.
+    // Toast fill reuses the raised surface so toasts track Dark/Light;
+    // the kind stripe (accent / success / danger) carries severity.
+    readonly property color toastBg: bgRaised
+    readonly property int toastDurationMs: 4000
+    readonly property int toastMaxVisible: 3
+    // Record badge: danger dot + dark chip so REC stays legible in both
+    // modes; chip text is always light on the dark chip.
+    readonly property color recordDot: danger
+    readonly property color recordChip: "#1A1A1A"
+    readonly property color recordChipText: "#FFFFFF"
+    // Empty/loading/error state art: muted ghost tile + hint text.
+    readonly property color stateGhost: bgRaised
+    // Low-power mode: bound from Main.qml <-> SettingsStore.lowPowerMode.
+    // When true, ThumbnailCard skips Canvas doodles/gradients and the grid
+    // keeps 60fps on weak GPUs (see LibraryView perf notes).
+    property bool reduceEffects: false
+
     // Volume wedge.
     // M4 DECISION: remapped from lime #B7C82E to accent for theming
     // consistency. Player.png showed a lime wedge on a dark track; keeping
