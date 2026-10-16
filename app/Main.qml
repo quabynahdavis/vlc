@@ -201,7 +201,7 @@ ApplicationWindow {
                         }
                         contentItem: Text {
                             text: parent.text
-                            color: Ds.Theme.onAccent
+                            color: Ds.Theme.accentOn
                             font: parent.font
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
