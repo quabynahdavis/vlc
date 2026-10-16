@@ -5,7 +5,7 @@
 
 namespace {
 
-const int kSchemaVersion = 4;
+const int kSchemaVersion = 5;
 
 QVariantList defaultEqBands()
 {
@@ -52,6 +52,7 @@ void SettingsStore::resetToDefaults()
     m_saveLog = true;
     m_logFile.clear();
     m_logLevel = QStringLiteral("Errors only");
+    m_lowPowerMode = false;
     m_eqEnabled = false;
     m_eqPreset = QStringLiteral("None");
     m_eqBands = defaultEqBands();
@@ -72,6 +73,7 @@ void SettingsStore::resetToDefaults()
     emit themeModeChanged();
     emit accentColorChanged();
     emit iconPackChanged();
+    emit lowPowerModeChanged();
     emit eqBandsChanged();
     emit subDelayChanged();
     qInfo() << "M3 settings: reset to defaults (stub)";
@@ -304,6 +306,18 @@ void SettingsStore::setLogLevel(const QString &v)
     emit logLevelChanged();
 }
 
+bool SettingsStore::lowPowerMode() const { return m_lowPowerMode; }
+void SettingsStore::setLowPowerMode(bool v)
+{
+    if (m_lowPowerMode == v)
+        return;
+    m_lowPowerMode = v;
+    put(QStringLiteral("m5/performance/lowPower"), v);
+    qInfo() << "M5 settings: performance/lowPower =" << v
+            << "(stub: disables Canvas FX + gradients for 60fps)";
+    emit lowPowerModeChanged();
+}
+
 bool SettingsStore::eqEnabled() const { return m_eqEnabled; }
 void SettingsStore::setEqEnabled(bool v)
 {
@@ -507,6 +521,7 @@ void SettingsStore::loadAll()
     m_subFont = s.value(QStringLiteral("m3/subtitles/font"), m_subFont).toString();
     m_textColor = s.value(QStringLiteral("m3/subtitles/textColor"), m_textColor).toString();
     m_outlineColor = s.value(QStringLiteral("m3/subtitles/outlineColor"), m_outlineColor).toString();
+    m_lowPowerMode = s.value(QStringLiteral("m5/performance/lowPower"), m_lowPowerMode).toBool();
 }
 
 void SettingsStore::migrateIfNeeded()
@@ -524,7 +539,14 @@ void SettingsStore::migrateIfNeeded()
                 << "(add appearance/iconPack=Two-tone, keep M3 keys)";
         if (!s.contains(QStringLiteral("m3/appearance/iconPack")))
             s.setValue(QStringLiteral("m3/appearance/iconPack"), QStringLiteral("Two-tone"));
-    } else {
+    }
+    // M5 adds m5/performance/lowPower (default OFF); M3/M4 keys untouched.
+    if (stored == 4) {
+        qInfo() << "M5 SettingsStore: migrating schema 4 -> 5"
+                << "(add performance/lowPower=false, keep M3/M4 keys)";
+        if (!s.contains(QStringLiteral("m5/performance/lowPower")))
+            s.setValue(QStringLiteral("m5/performance/lowPower"), false);
+    } else if (stored != 3) {
         qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
                 << "(stub: namespaced keys, no legacy import)";
     }

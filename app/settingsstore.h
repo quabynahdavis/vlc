@@ -11,6 +11,9 @@
 // change; live libVLC application (equalizer / spu delay / video adjust)
 // lands after M3 — the apply*() stubs below only qInfo() the intent so
 // QML stays live-bound without a player engine yet.
+// M5 adds lowPowerMode (Performance page): when ON, Theme.reduceEffects is
+// bound true and ThumbnailCard skips Canvas doodles/gradients to hold
+// 60fps on weak GPUs. Schema v5 migrates the new key with default OFF.
 class SettingsStore : public QObject
 {
     Q_OBJECT
@@ -26,6 +29,7 @@ class SettingsStore : public QObject
     Q_PROPERTY(bool saveLog READ saveLog WRITE setSaveLog NOTIFY saveLogChanged)
     Q_PROPERTY(QString logFile READ logFile WRITE setLogFile NOTIFY logFileChanged)
     Q_PROPERTY(QString logLevel READ logLevel WRITE setLogLevel NOTIFY logLevelChanged)
+    Q_PROPERTY(bool lowPowerMode READ lowPowerMode WRITE setLowPowerMode NOTIFY lowPowerModeChanged)
 
     // Audio defaults (EQ + spatial rows).
     Q_PROPERTY(bool eqEnabled READ eqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
@@ -98,6 +102,8 @@ public:
     void setLogFile(const QString &v);
     QString logLevel() const;
     void setLogLevel(const QString &v);
+    bool lowPowerMode() const;
+    void setLowPowerMode(bool v);
 
     bool eqEnabled() const;
     void setEqEnabled(bool v);
@@ -145,6 +151,7 @@ signals:
     void saveLogChanged();
     void logFileChanged();
     void logLevelChanged();
+    void lowPowerModeChanged();
     void eqEnabledChanged();
     void eqPresetChanged();
     void eqBandsChanged();
@@ -179,6 +186,7 @@ private:
     bool m_saveLog = true;
     QString m_logFile;
     QString m_logLevel = QStringLiteral("Errors only");
+    bool m_lowPowerMode = false;
 
     bool m_eqEnabled = false;
     QString m_eqPreset = QStringLiteral("None");
@@ -198,5 +206,5 @@ private:
     QString m_textColor = QStringLiteral("#B8B8B8");
     QString m_outlineColor = QStringLiteral("#0C0C0C");
 
-    int m_schemaVersion = 4;
+    int m_schemaVersion = 5;
 };
