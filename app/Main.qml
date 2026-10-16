@@ -30,6 +30,9 @@ ApplicationWindow {
     property string currentView: "library"
     property real volumeLevel: 0.8
     property bool muted: false
+    // M3: settings / effects / subtitles panel state (transport opens them).
+    property bool effectsOpen: false
+    property bool subtitlesOpen: false
 
     // Demo position when no media is loaded: 00:02:10 of 00:25:40,
     // ticking live while "playing" so the transport stays live-bound.
@@ -142,6 +145,10 @@ ApplicationWindow {
     // M2 view switch: Ctrl+1 Player, Ctrl+2 Library.
     Shortcut { sequence: "Ctrl+1"; onActivated: root.currentView = "player" }
     Shortcut { sequence: "Ctrl+2"; onActivated: root.currentView = "library" }
+    // M3: settings (Ctrl+,), effects (Ctrl+E), subtitles (Ctrl+T) stubs.
+    Shortcut { sequence: "Ctrl+,"; onActivated: settingsDialog.openPage("general") }
+    Shortcut { sequence: "Ctrl+E"; onActivated: root.effectsOpen = !root.effectsOpen }
+    Shortcut { sequence: "Ctrl+T"; onActivated: root.subtitlesOpen = !root.subtitlesOpen }
 
     // M2 create-playlist dialog, shared by rail/drawer in both views.
     CreatePlaylistDialog {
@@ -365,11 +372,48 @@ ApplicationWindow {
                     root.muted = false;
             }
             onMuteToggled: root.muted = !root.muted
-            onEqClicked: console.log("M1 equalizer panel (stub, lands in M4)")
-            onSubsClicked: console.log("M1 subtitles panel (stub, lands in M4)")
-            onSettingsClicked: console.log("M1 settings (stub, lands in M3)")
+            onEqClicked: {
+                root.effectsOpen = !root.effectsOpen;
+                console.log("M3 effects dock (stub):", root.effectsOpen ? "open" : "closed");
+            }
+            onSubsClicked: {
+                root.subtitlesOpen = !root.subtitlesOpen;
+                console.log("M3 subtitles panel (stub):", root.subtitlesOpen ? "open" : "closed");
+            }
+            onSettingsClicked: settingsDialog.openPage("general")
             onQueueClicked: console.log("M1 queue (stub, lands in M2)")
         }
+    }
+
+    // M3 Global Settings modal (1080px max, taxonomy App/Media/System).
+    GlobalSettingsDialog {
+        id: settingsDialog
+    }
+
+    // M3 right docks: Effects (7 panels) + Subtitles (tabs). They float
+    // over the center content so M1/M2 layout stays intact.
+    EffectsDock {
+        id: effectsDock
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: Ds.Theme.titleBarHeight
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Ds.Theme.transportHeight
+        visible: root.effectsOpen
+        isOpen: root.effectsOpen
+        onCloseRequested: root.effectsOpen = false
+    }
+
+    SubtitlesPanel {
+        id: subtitlesPanel
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: Ds.Theme.titleBarHeight
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Ds.Theme.transportHeight
+        visible: root.subtitlesOpen
+        isOpen: root.subtitlesOpen
+        onCloseRequested: root.subtitlesOpen = false
     }
 
     PlayerContextMenu {

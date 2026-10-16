@@ -59,6 +59,8 @@ qt_add_executable(vlc-redesign-m0
   main.cpp
   libraryservice.h
   libraryservice.cpp
+  settingsstore.h
+  settingsstore.cpp
 )
 
 # Theme.qml is a QML singleton (import "Ds" as Ds -> Ds.Theme).
@@ -81,6 +83,14 @@ qt_add_qml_module(vlc-redesign-m0
     ThumbnailCard.qml
     ThumbnailWorker.qml
     CreatePlaylistDialog.qml
+    SettingToggle.qml
+    SliderRow.qml
+    CollapsiblePanel.qml
+    EqualizerBank.qml
+    AudioSettingsPage.qml
+    GlobalSettingsDialog.qml
+    EffectsDock.qml
+    SubtitlesPanel.qml
     Ds/Theme.qml
 )
 

@@ -18,6 +18,8 @@ Rectangle {
     property string activeTab: "subtitles"
     property bool presetOpen: false
 
+    signal closeRequested
+
     function storeAvailable() {
         return typeof SettingsStore !== "undefined";
     }
@@ -84,7 +86,7 @@ Rectangle {
                 font.pixelSize: 20
                 focusPolicy: Qt.NoFocus
                 onClicked: {
-                    panel.isOpen = false;
+                    panel.closeRequested();
                     console.log("M3 subtitles panel close (stub)");
                 }
                 contentItem: Text {

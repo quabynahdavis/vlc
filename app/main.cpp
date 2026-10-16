@@ -7,6 +7,7 @@
 #include <vlc/vlc.h>
 
 #include "libraryservice.h"
+#include "settingsstore.h"
 
 // M0 hello-video entry point.
 // Usage: ./vlc-redesign-m0 [media-file-or-url]
@@ -49,6 +50,11 @@ int main(int argc, char *argv[])
     libraryService.ensureSchema();
     engine.rootContext()->setContextProperty(QStringLiteral("LibraryService"),
                                              &libraryService);
+
+    // M3 settings store: QSettings-backed, namespaced keys, migratable.
+    SettingsStore settingsStore;
+    engine.rootContext()->setContextProperty(QStringLiteral("SettingsStore"),
+                                             &settingsStore);
 
     if (initialSource.isValid() && !initialSource.isEmpty()) {
         engine.setInitialProperties({{QStringLiteral("initialSource"), initialSource}});

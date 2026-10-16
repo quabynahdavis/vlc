@@ -16,6 +16,8 @@ Rectangle {
 
     property bool isOpen: false
 
+    signal closeRequested
+
     function loadKey(key, fallback) {
         try {
             if (typeof SettingsStore !== "undefined")
@@ -116,7 +118,7 @@ Rectangle {
                 font.pixelSize: 20
                 focusPolicy: Qt.NoFocus
                 onClicked: {
-                    dock.isOpen = false;
+                    dock.closeRequested();
                     console.log("M3 effects dock close (stub)");
                 }
                 contentItem: Text {
