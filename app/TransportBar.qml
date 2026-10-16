@@ -3,10 +3,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "Ds" as Ds
 
-// M1 bottom transport: prev / orange play / next, live-bound time
-// labels, accent scrubber, speaker + lime volume wedge, EQ / subtitles /
-// settings / queue stub buttons. Unicode glyph placeholders until the
-// two-tone icon set lands.
+// M4 bottom transport: IconTheme prev / accent play / next, live-bound time
+// labels, accent scrubber, speaker Icon + accent volume wedge, EQ / subs /
+// settings / queue Icon buttons. All glyphs resolve via Icon.qml
+// (icons/<pack>/<name>.svg, Two-tone ships, others fallback).
 Rectangle {
     id: transport
     color: Ds.Theme.bgApp
@@ -48,18 +48,16 @@ Rectangle {
 
         // Prev.
         ToolButton {
-            text: "|◀"
-            font.pixelSize: 14
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Previous (P)"
             ToolTip.visible: hovered
             onClicked: transport.prevClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "prev"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -67,22 +65,18 @@ Rectangle {
             }
         }
 
-        // Play / pause (orange).
+        // Play / pause (accent).
         Button {
             Layout.preferredWidth: 52
             Layout.preferredHeight: 32
-            text: transport.playing ? "‖" : "▶"
-            font.pixelSize: 14
             focusPolicy: Qt.NoFocus
             ToolTip.text: transport.playing ? "Pause (Space)" : "Play (Space)"
             ToolTip.visible: hovered
             onClicked: transport.playClicked()
-            contentItem: Text {
-                text: parent.text
-                color: Ds.Theme.accentOn
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: transport.playing ? "pause" : "play"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.pressed ? Ds.Theme.accentPressed
@@ -93,18 +87,16 @@ Rectangle {
 
         // Next.
         ToolButton {
-            text: "▶|"
-            font.pixelSize: 14
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Next (N)"
             ToolTip.visible: hovered
             onClicked: transport.nextClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "next"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -165,21 +157,19 @@ Rectangle {
             font.family: "monospace"
         }
 
-        // Volume: speaker toggle + tapered wedge slider.
+        // Volume: speaker Icon toggle + tapered wedge slider.
         ToolButton {
-            text: "♫"
-            font.pixelSize: 15
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: transport.muted ? "Unmute" : "Mute"
             ToolTip.visible: hovered
             onClicked: transport.muteToggled()
-            contentItem: Text {
-                text: parent.text
-                color: transport.muted ? Ds.Theme.textHint
-                                       : (parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary)
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "volume"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
+                opacity: transport.muted ? 0.45 : 1.0
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -212,7 +202,7 @@ Rectangle {
                     ctx.lineTo(0, yTop(0));
                     ctx.closePath();
                     ctx.fill();
-                    // Fill.
+                    // Fill: M4 remapped from lime to Theme.volumeFill (= accent).
                     var fx = Math.max(0, Math.min(1, transport.muted ? 0 : transport.volume)) * w;
                     if (fx > 0.5) {
                         ctx.fillStyle = Ds.Theme.volumeFill.toString();
@@ -231,6 +221,13 @@ Rectangle {
                 function onVolumeChanged() { wedgeCanvas.requestPaint(); }
                 function onMutedChanged() { wedgeCanvas.requestPaint(); }
             }
+            // Repaint wedge when the theme/accent changes (fill+track are Theme-bound).
+            Connections {
+                target: Ds.Theme
+                function onAccentChanged() { wedgeCanvas.requestPaint(); }
+                function onWedgeTrackChanged() { wedgeCanvas.requestPaint(); }
+                function onVolumeFillChanged() { wedgeCanvas.requestPaint(); }
+            }
             Component.onCompleted: wedgeCanvas.requestPaint()
 
             MouseArea {
@@ -245,20 +242,18 @@ Rectangle {
             }
         }
 
-        // EQ / subtitles / settings / queue stubs (panels land in M4/M3).
+        // EQ / subtitles / settings / queue via IconTheme.
         ToolButton {
-            text: "∿"
-            font.pixelSize: 15
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Equalizer"
             ToolTip.visible: hovered
             onClicked: transport.eqClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "eq"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -266,18 +261,16 @@ Rectangle {
             }
         }
         ToolButton {
-            text: "▤"
-            font.pixelSize: 15
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Subtitles"
             ToolTip.visible: hovered
             onClicked: transport.subsClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "subs"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -285,18 +278,16 @@ Rectangle {
             }
         }
         ToolButton {
-            text: "⚙"
-            font.pixelSize: 15
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Settings"
             ToolTip.visible: hovered
             onClicked: transport.settingsClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "settings"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -304,18 +295,16 @@ Rectangle {
             }
         }
         ToolButton {
-            text: "☰"
-            font.pixelSize: 15
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
             focusPolicy: Qt.NoFocus
             ToolTip.text: "Queue"
             ToolTip.visible: hovered
             onClicked: transport.queueClicked()
-            contentItem: Text {
-                text: parent.text
-                color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-                font: parent.font
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            contentItem: Icon {
+                name: "queue"
+                size: Ds.Theme.iconSize
+                anchors.centerIn: parent
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"

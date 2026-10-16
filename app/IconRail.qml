@@ -3,9 +3,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "Ds" as Ds
 
-// M1 left icon rail (60px): home / files / music / radio / playlist /
-// history, "+" pinned to the bottom. Unicode glyph placeholders until
-// the two-tone icon set lands; tooltips carry the labels.
+// M4 left icon rail (60px): home / files / music / radio / playlist /
+// history, "+" pinned to the bottom. All glyphs resolve via Icon.qml
+// (Two-tone ships; Lucide/Phosphor/Material fallback). Active cell keeps
+// the 3px accent bar; icons stay two-tone (dynamic active tint follow-up).
 Rectangle {
     id: rail
     color: Ds.Theme.bgApp
@@ -24,12 +25,12 @@ Rectangle {
 
         Repeater {
             model: [
-                { nav: "home", glyph: "⌂", tip: "Home" },
-                { nav: "files", glyph: "▦", tip: "Files" },
-                { nav: "music", glyph: "♪", tip: "Music" },
-                { nav: "radio", glyph: "◉", tip: "Radio" },
-                { nav: "playlist", glyph: "☰", tip: "Playlists" },
-                { nav: "history", glyph: "↺", tip: "History" }
+                { nav: "home", icon: "home", tip: "Home" },
+                { nav: "files", icon: "files", tip: "Files" },
+                { nav: "music", icon: "music", tip: "Music" },
+                { nav: "radio", icon: "radio", tip: "Radio" },
+                { nav: "playlist", icon: "playlist", tip: "Playlists" },
+                { nav: "history", icon: "history", tip: "History" }
             ]
             delegate: Item {
                 id: cell
@@ -50,20 +51,15 @@ Rectangle {
                 ToolButton {
                     anchors.fill: parent
                     anchors.leftMargin: 3
-                    text: cell.modelData.glyph
-                    font.pixelSize: 19
                     focusPolicy: Qt.NoFocus
                     ToolTip.text: cell.modelData.tip
                     ToolTip.visible: hovered
                     onClicked: rail.navSelected(cell.modelData.nav)
-                    contentItem: Text {
-                        text: parent.text
-                        color: rail.active === cell.modelData.nav
-                               ? Ds.Theme.accent
-                               : (parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary)
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    contentItem: Icon {
+                        name: cell.modelData.icon
+                        size: Ds.Theme.iconSize
+                        active: rail.active === cell.modelData.nav
+                        anchors.centerIn: parent
                     }
                     background: Rectangle {
                         color: parent.hovered ? Ds.Theme.bgHover : "transparent"
@@ -80,18 +76,14 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 40
         height: 40
-        text: "+"
-        font.pixelSize: 20
         focusPolicy: Qt.NoFocus
         ToolTip.text: "Add"
         ToolTip.visible: hovered
         onClicked: rail.navSelected("add")
-        contentItem: Text {
-            text: parent.text
-            color: parent.hovered ? Ds.Theme.textPrimary : Ds.Theme.textSecondary
-            font: parent.font
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        contentItem: Icon {
+            name: "add"
+            size: Ds.Theme.iconSize
+            anchors.centerIn: parent
         }
         background: Rectangle {
             color: parent.hovered ? Ds.Theme.bgHover : "transparent"
