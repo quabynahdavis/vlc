@@ -19,6 +19,7 @@ class SettingsStore : public QObject
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(QString themeMode READ themeMode WRITE setThemeMode NOTIFY themeModeChanged)
     Q_PROPERTY(QString accentColor READ accentColor WRITE setAccentColor NOTIFY accentColorChanged)
+    Q_PROPERTY(QString iconPack READ iconPack WRITE setIconPack NOTIFY iconPackChanged)
     Q_PROPERTY(bool showConfirmDialogs READ showConfirmDialogs WRITE setShowConfirmDialogs NOTIFY showConfirmDialogsChanged)
     Q_PROPERTY(bool checkUpdates READ checkUpdates WRITE setCheckUpdates NOTIFY checkUpdatesChanged)
     Q_PROPERTY(bool developerMode READ developerMode WRITE setDeveloperMode NOTIFY developerModeChanged)
@@ -62,6 +63,7 @@ public:
     Q_INVOKABLE QStringList eqBandNames() const;
     Q_INVOKABLE QStringList languageOptions() const;
     Q_INVOKABLE QStringList themeOptions() const;
+    Q_INVOKABLE QStringList iconPackOptions() const;
     Q_INVOKABLE QStringList eqPresetOptions() const;
     Q_INVOKABLE QStringList spatialModeOptions() const;
     Q_INVOKABLE QStringList logLevelOptions() const;
@@ -82,6 +84,8 @@ public:
     void setThemeMode(const QString &v);
     QString accentColor() const;
     void setAccentColor(const QString &v);
+    QString iconPack() const;
+    void setIconPack(const QString &v);
     bool showConfirmDialogs() const;
     void setShowConfirmDialogs(bool v);
     bool checkUpdates() const;
@@ -134,6 +138,7 @@ signals:
     void languageChanged();
     void themeModeChanged();
     void accentColorChanged();
+    void iconPackChanged();
     void showConfirmDialogsChanged();
     void checkUpdatesChanged();
     void developerModeChanged();
@@ -167,6 +172,7 @@ private:
     QString m_language = QStringLiteral("English");
     QString m_themeMode = QStringLiteral("Dark");
     QString m_accentColor = QStringLiteral("#D37918");
+    QString m_iconPack = QStringLiteral("Two-tone");
     bool m_showConfirmDialogs = false;
     bool m_checkUpdates = false;
     bool m_developerMode = false;
@@ -192,5 +198,5 @@ private:
     QString m_textColor = QStringLiteral("#B8B8B8");
     QString m_outlineColor = QStringLiteral("#0C0C0C");
 
-    int m_schemaVersion = 3;
+    int m_schemaVersion = 4;
 };

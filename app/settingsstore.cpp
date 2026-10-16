@@ -5,7 +5,7 @@
 
 namespace {
 
-const int kSchemaVersion = 3;
+const int kSchemaVersion = 4;
 
 QVariantList defaultEqBands()
 {
@@ -45,6 +45,7 @@ void SettingsStore::resetToDefaults()
     m_language = QStringLiteral("English");
     m_themeMode = QStringLiteral("Dark");
     m_accentColor = QStringLiteral("#D37918");
+    m_iconPack = QStringLiteral("Two-tone");
     m_showConfirmDialogs = false;
     m_checkUpdates = false;
     m_developerMode = false;
@@ -70,6 +71,7 @@ void SettingsStore::resetToDefaults()
     emit languageChanged();
     emit themeModeChanged();
     emit accentColorChanged();
+    emit iconPackChanged();
     emit eqBandsChanged();
     emit subDelayChanged();
     qInfo() << "M3 settings: reset to defaults (stub)";
@@ -109,6 +111,14 @@ QStringList SettingsStore::themeOptions() const
 {
     return QStringList{QStringLiteral("Dark"), QStringLiteral("Light"),
                        QStringLiteral("System")};
+}
+
+QStringList SettingsStore::iconPackOptions() const
+{
+    // M4 IconTheme: Two-tone ships; Lucide / Phosphor / Material fall back
+    // to Two-tone (full 3-pack bundling + attribution follow-up).
+    return QStringList{QStringLiteral("Two-tone"), QStringLiteral("Lucide"),
+                       QStringLiteral("Phosphor"), QStringLiteral("Material")};
 }
 
 QStringList SettingsStore::eqPresetOptions() const
@@ -214,6 +224,18 @@ void SettingsStore::setAccentColor(const QString &v)
     put(QStringLiteral("m3/appearance/accent"), m_accentColor);
     qInfo() << "M3 settings: appearance/accent =" << m_accentColor;
     emit accentColorChanged();
+}
+
+QString SettingsStore::iconPack() const { return m_iconPack; }
+void SettingsStore::setIconPack(const QString &v)
+{
+    if (m_iconPack == v)
+        return;
+    m_iconPack = v.isEmpty() ? QStringLiteral("Two-tone") : v;
+    put(QStringLiteral("m3/appearance/iconPack"), m_iconPack);
+    qInfo() << "M4 icontheme: appearance/iconPack =" << m_iconPack
+            << "(Two-tone ships; others fallback, see Icon.qml)";
+    emit iconPackChanged();
 }
 
 bool SettingsStore::showConfirmDialogs() const { return m_showConfirmDialogs; }
@@ -460,6 +482,7 @@ void SettingsStore::loadAll()
     m_language = s.value(QStringLiteral("m3/appearance/language"), m_language).toString();
     m_themeMode = s.value(QStringLiteral("m3/appearance/theme"), m_themeMode).toString();
     m_accentColor = s.value(QStringLiteral("m3/appearance/accent"), m_accentColor).toString();
+    m_iconPack = s.value(QStringLiteral("m3/appearance/iconPack"), m_iconPack).toString();
     m_showConfirmDialogs = s.value(QStringLiteral("m3/startup/confirmDialogs"), m_showConfirmDialogs).toBool();
     m_checkUpdates = s.value(QStringLiteral("m3/startup/checkUpdates"), m_checkUpdates).toBool();
     m_developerMode = s.value(QStringLiteral("m3/diagnostics/developerMode"), m_developerMode).toBool();
@@ -494,10 +517,17 @@ void SettingsStore::migrateIfNeeded()
         m_schemaVersion = stored;
         return;
     }
-    // M3 is the first namespaced schema: carry nothing forward, just stamp.
-    // Future migrations (M4+: libVLC-backed EQ/spu keys) branch on `stored`.
-    qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
-            << "(stub: namespaced keys, no legacy import)";
+    // M4 adds m3/appearance/iconPack (default Two-tone); existing M3 keys
+    // carry forward untouched. Future libVLC-backed EQ/spu keys branch here.
+    if (stored == 3) {
+        qInfo() << "M4 SettingsStore: migrating schema 3 -> 4"
+                << "(add appearance/iconPack=Two-tone, keep M3 keys)";
+        if (!s.contains(QStringLiteral("m3/appearance/iconPack")))
+            s.setValue(QStringLiteral("m3/appearance/iconPack"), QStringLiteral("Two-tone"));
+    } else {
+        qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
+                << "(stub: namespaced keys, no legacy import)";
+    }
     s.setValue(QStringLiteral("m3/schemaVersion"), kSchemaVersion);
     m_schemaVersion = kSchemaVersion;
 }
