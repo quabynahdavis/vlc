@@ -103,9 +103,91 @@ app/
   README.md        # this file
 ```
 
-## Packaging notes (M0 → M1)
+## Packaging (M6: CMake install + CPack stub)
+
+`cmake --install` + `cpack` produce a TGZ/DEB (Linux), ZIP/WIX (Windows), or
+DMG (macOS) smoke artifact from the exact tree below. Store-grade installers
+wrap the same payload per-OS:
+
+```sh
+cmake -S app -B /tmp/opencode/vlc-m6-build -G Ninja
+cmake --build /tmp/opencode/vlc-m6-build
+cmake --install /tmp/opencode/vlc-m6-build --prefix /tmp/opencode/vlc-m6-root
+cmake --build /tmp/opencode/vlc-m6-build --target package   # CPack TGZ/DEB
+```
+
+Install tree: `bin/vlc-redesign-m0`, `share/doc/vlc-redesign-m0/README.md`,
+`share/vlc-redesign-m0/i18n/*.ts`.
 
 - **Linux AppImage:** `linuxdeploy` + `linuxdeploy-plugin-qt` + manual `libvlc.so*` and `/usr/lib/vlc/plugins` into `usr/lib/`. Set `VLC_PLUGIN_PATH` or keep relative `plugins/`.
-- **Windows WiX:** `windeployqt` + libVLC DLLs/plugins → WiX v4 `heat` harvest → MSI. Keep `plugins/` hierarchy intact; VLC fails silently if missing.
+- **Windows WiX:** `windeployqt --qmldir app build\vlc-redesign-m0.exe`, copy `libvlc.dll`, `libvlccore.dll`, `plugins\` beside the exe → WiX v4 `heat` harvest → MSI. Keep `plugins/` hierarchy intact; VLC fails silently if missing.
 - **macOS DMG:** `macdeployqt MyApp.app -qmldir=app` + VLC dylibs/plugins + `create-dmg`. Notarize for Gatekeeper.
 - Always ship the exact `plugins/` matching the bundled `libvlc` version; mixing 3.x/4.x breaks load.
+
+Follow-ups: code signing (all OSes), `.qm` bundling via `qt_add_translations`
+(`app/i18n/*.ts` → `:/i18n`), VLC plugins payload in CPack, signed update
+feed.
+
+## Auto-update (M6 stub)
+
+Settings → Startup → *Check for updates automatically* (default OFF) +
+*Check now*. The stub feed always reports "up to date"; a startup check runs
+when the toggle is ON. Real HTTPS feed + signature verify + installer
+relaunch lands after M6.
+
+## Privacy (M6)
+
+Telemetry defaults **OFF** (Settings → Privacy → *Share anonymous usage
+statistics*, opt-in). M6 ships no network telemetry client — the toggle only
+persists the preference. Crash reports always ask first.
+
+## Diagnostics (M6)
+
+Settings → Diagnostics: *Save a log* (default ON) writes to the log-file path
+(default `~/.local/share/VLC/"VLC Redesign"/vlc-redesign.log`); *Log details*
+defaults to **Errors only** (file keeps Critical/Fatal; Warnings/Info/Debug
+opt in, console always keeps a copy). *Export log bundle* writes a
+plain-text bundle (settings dump + last 200 log lines) for bug reports —
+`.zip` compression is a follow-up. `Logger::selfTest()` logs one line per
+level for filter QA.
+
+## Keyboard map (M6 audit: 13/13 wired)
+
+| Keys | Action |
+|------|--------|
+| Space | Play / pause |
+| S | Stop |
+| P / N | Previous / next item |
+| R | Record (red REC badge + mm:ss) |
+| Ctrl + \\ | Hide / show UI (Escape also exits Hide-UI) |
+| Ctrl + Q | Quit |
+| Ctrl + , | Open Global Settings |
+| Ctrl + E | Effects dock |
+| Ctrl + T | Subtitles panel |
+| Ctrl + O | Open network stream |
+| Ctrl + 1 / Ctrl + 2 | Player / Library view |
+
+E/T stay Ctrl-modified on purpose: bare E/T would fire while typing in
+library search, URL, and settings fields (`WindowShortcut` context), matching
+real VLC (Ctrl+E Adjustments). Every control is Tab-focusable with a 2px
+accent focus ring (`Ds.Theme.focusRing`); modal dialogs trap focus (search /
+URL / name field focused on open, Escape closes).
+
+## Accessibility (M6)
+
+Icon buttons, sliders (name + live value), grid cards (name + episode +
+watched %), toggles (row label + ON/OFF), and dialogs (role + name) expose
+`Accessible.*`; toasts use a live-region alert; the record badge, stage state,
+and volume wedge announce text equivalents. Canvas-only art (thumbnail
+doodles, volume wedge, cone) always has a text counterpart.
+
+## i18n (M6)
+
+All user strings use `qsTr()`; Settings → Appearance → *Interface language*
+drives a `QTranslator` stub (`English` built-in; French/German/Spanish fall
+back to English until `.qm` ships — see `app/i18n/README.md` for the
+`lupdate`/`linguist`/`lrelease` workflow). *Pseudo-RTL (test)* flips
+`QGuiApplication` layout direction so `LayoutMirroring` row/anchor mirroring
+can be checked with English strings. Known gap: the settings-taxonomy
+`ListModel` labels stay English — `ListElement` forbids script calls, so
+those rows need a model rebuild on language change (follow-up).

@@ -61,6 +61,8 @@ qt_add_executable(vlc-redesign-m0
   libraryservice.cpp
   settingsstore.h
   settingsstore.cpp
+  logger.h
+  logger.cpp
 )
 
 # Theme.qml is a QML singleton (import "Ds" as Ds -> Ds.Theme).
@@ -133,3 +135,34 @@ install(TARGETS vlc-redesign-m0
   RUNTIME DESTINATION bin
   BUNDLE DESTINATION .
 )
+# M6: ship the README + i18n stubs alongside the binary so log-bundle,
+# locale, and packaging notes travel with the install tree.
+install(FILES README.md DESTINATION share/doc/vlc-redesign-m0)
+install(DIRECTORY i18n/ DESTINATION share/vlc-redesign-m0/i18n
+  FILES_MATCHING PATTERN "*.ts" PATTERN "*.md")
+
+# ------------------------------------------------------------------
+# M6 packaging (CPack stub). Generators per-OS (see README):
+#   Linux   AppImage via linuxdeploy (+ plugin-qt) — NOT cpack-generated;
+#           `cmake --build ... --target package` here emits TGZ/DEB as a CI
+#           smoke artifact, the AppImage recipe lives in README.
+#   Windows WiX MSI via windeployqt + heat harvest (README recipe).
+#   macOS   DMG via macdeployqt + create-dmg (README recipe).
+# Follow-ups: sign/notarize, feed signing for auto-update, .qm bundling via
+# qt_add_translations (app/i18n/*.ts -> :/i18n), VLC plugins payload.
+# ------------------------------------------------------------------
+set(CPACK_PACKAGE_NAME "vlc-redesign-m0")
+set(CPACK_PACKAGE_VENDOR "VLC")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VLC desktop shell redesign (Qt6 QML prototype)")
+set(CPACK_PACKAGE_CONTACT "vlc@example.invalid")
+set(CPACK_GENERATOR "TGZ")
+if(WIN32)
+  set(CPACK_GENERATOR "WIX;ZIP")
+elseif(APPLE)
+  set(CPACK_GENERATOR "DragNDrop;TGZ")
+else()
+  set(CPACK_GENERATOR "TGZ;DEB")
+endif()
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libvlc5 (>= 3.0)")
+include(CPack)
