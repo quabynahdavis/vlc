@@ -249,10 +249,136 @@ bool LibraryService::deletePlaylist(const QString &name)
 
 void LibraryService::requestThumbnail(const QString &path)
 {
-    // Async-by-design stub: real frame decode + disk cache lands later.
-    // Resolve with a short delay so QML stays virtualized and non-blocking.
+    // M5 LRU-200: cache hits emit on the next loop (still async, no C++
+    // hop cost); misses resolve after 50ms and populate the LRU. Real
+    // frame decode + SQLite disk cache lands later; the 50ms delay keeps
+    // QML virtualized and non-blocking at 60fps @1k rows.
+    if (path.isEmpty())
+        return;
+    if (m_thumbCache.contains(path)) {
+        touchThumb(path);
+        const QString hint = m_thumbCache.value(path);
+        QTimer::singleShot(0, this, [this, path, hint]() {
+            emit thumbnailReady(path, hint);
+        });
+        return;
+    }
     QTimer::singleShot(50, this, [this, path]() {
-        qInfo() << "M2 thumbnail worker (stub):" << path;
-        emit thumbnailReady(path, QStringLiteral("#D37918"));
+        // Deterministic hint stub (QML hintFor uses the same palette
+        // family; exact match is not required for the placeholder).
+        static const char *kHints[] = {
+            "#D37918", "#B7C82E", "#3FB950", "#58A6FF",
+            "#A371F7", "#F778BA", "#FF7B72", "#E08A2E",
+        };
+        uint h = 0;
+        for (QChar c : path)
+            h = h * 31 + uint(c.unicode());
+        const QString hint = QString::fromLatin1(kHints[h % 8]);
+        storeThumb(path, hint);
+        qInfo() << "M5 thumbnail worker:" << path << hint
+                << "(cache" << m_thumbOrder.size() << "/" << kThumbCacheCap << ")";
+        emit thumbnailReady(path, hint);
     });
+}
+
+int LibraryService::thumbnailCacheSize() const
+{
+    return m_thumbOrder.size();
+}
+
+bool LibraryService::isThumbnailCached(const QString &path) const
+{
+    return m_thumbCache.contains(path);
+}
+
+void LibraryService::clearThumbnailCache()
+{
+    m_thumbCache.clear();
+    m_thumbOrder.clear();
+    qInfo() << "M5 thumbnail cache cleared (stub)";
+}
+
+void LibraryService::startScan(const QString &folder)
+{
+    // Scan watcher stub: fake a 20-file sweep at ~8 files/sec so QML can
+    // show determinate progress. Real QFileSystemWatcher + SQLite upsert
+    // (with thumbnails + duration probe) lands after M5.
+    if (m_scanning) {
+        qInfo() << "M5 scan watcher: already scanning" << m_scanFolder;
+        return;
+    }
+    const QString root = folder.trimmed().isEmpty() ? QStringLiteral("/videos")
+                                                    : folder.trimmed();
+    m_scanning = true;
+    m_scanFolder = root;
+    m_scanDone = 0;
+    m_scanTotal = 20;
+    m_scanProgressValue = 0.0;
+    emit scanningChanged();
+    emit scanProgressChanged();
+    emit scanStarted(root);
+    qInfo() << "M5 scan watcher started (stub):" << root;
+    QTimer *pump = new QTimer(this);
+    pump->setInterval(120);
+    connect(pump, &QTimer::timeout, this, [this, pump]() {
+        if (!m_scanning) {
+            pump->stop();
+            pump->deleteLater();
+            return;
+        }
+        ++m_scanDone;
+        m_scanProgressValue = double(m_scanDone) / double(m_scanTotal);
+        emit scanProgressChanged();
+        emit scanProgress(m_scanFolder, m_scanDone, m_scanTotal);
+        if (m_scanDone >= m_scanTotal) {
+            pump->stop();
+            pump->deleteLater();
+            m_scanning = false;
+            m_scanProgressValue = 1.0;
+            emit scanningChanged();
+            emit scanProgressChanged();
+            emit scanFinished(m_scanFolder, m_scanTotal);
+            qInfo() << "M5 scan watcher finished (stub):" << m_scanFolder
+                    << m_scanTotal << "files";
+        }
+    });
+    pump->start();
+}
+
+void LibraryService::stopScan()
+{
+    if (!m_scanning)
+        return;
+    m_scanning = false;
+    m_scanProgressValue = 0.0;
+    emit scanningChanged();
+    emit scanProgressChanged();
+    qInfo() << "M5 scan watcher stopped (stub):" << m_scanFolder;
+}
+
+bool LibraryService::scanning() const
+{
+    return m_scanning;
+}
+
+double LibraryService::scanProgress() const
+{
+    return m_scanProgressValue;
+}
+
+void LibraryService::storeThumb(const QString &path, const QString &hint)
+{
+    if (!m_thumbCache.contains(path) && m_thumbOrder.size() >= kThumbCacheCap) {
+        const QString oldest = m_thumbOrder.takeFirst();
+        m_thumbCache.remove(oldest);
+        qInfo() << "M5 thumbnail LRU evict:" << oldest;
+    }
+    m_thumbCache.insert(path, hint);
+    touchThumb(path);
+}
+
+void LibraryService::touchThumb(const QString &path)
+{
+    m_thumbOrder.removeAll(path);
+    m_thumbOrder.append(path);
 }
