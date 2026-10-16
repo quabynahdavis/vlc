@@ -74,6 +74,7 @@ qt_add_qml_module(vlc-redesign-m0
   QML_FILES
     Main.qml
     TitleBar.qml
+    Icon.qml
     IconRail.qml
     PlaylistDrawer.qml
     TransportBar.qml
@@ -92,6 +93,23 @@ qt_add_qml_module(vlc-redesign-m0
     EffectsDock.qml
     SubtitlesPanel.qml
     Ds/Theme.qml
+  RESOURCES
+    icons/two-tone/prev.svg
+    icons/two-tone/play.svg
+    icons/two-tone/pause.svg
+    icons/two-tone/next.svg
+    icons/two-tone/volume.svg
+    icons/two-tone/eq.svg
+    icons/two-tone/subs.svg
+    icons/two-tone/settings.svg
+    icons/two-tone/queue.svg
+    icons/two-tone/home.svg
+    icons/two-tone/files.svg
+    icons/two-tone/music.svg
+    icons/two-tone/radio.svg
+    icons/two-tone/playlist.svg
+    icons/two-tone/history.svg
+    icons/two-tone/add.svg
 )
 
 target_link_libraries(vlc-redesign-m0 PRIVATE
