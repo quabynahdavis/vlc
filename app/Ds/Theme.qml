@@ -16,7 +16,7 @@ QtObject {
     // Accent (VLC orange, M0)
     readonly property color accent: "#D37918"
     readonly property color accentHover: "#E08A2E"
-    readonly property color onAccent: "#0E0E0E"
+    readonly property color accentOn: "#0E0E0E"
 
     // Video stage
     readonly property color stage: "#000000"
