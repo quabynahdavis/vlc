@@ -454,6 +454,27 @@ Dialog {
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
+                        // M7: T4 master switch surfaced under Appearance too
+                        // (mirrors Settings > Interface > Close-to-mini).
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Close button collapses to mini  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.closeToMini : true
+                                accessibleLabel: "Close button collapses to mini"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.closeToMini = on;
+                                }
+                            }
+                        }
 
                         Text {
                             text: qsTr("Startup")
@@ -962,10 +983,146 @@ Dialog {
                         }
                     }
 
+                    // ===== Interface page (M7): mini-player master + 4
+                    // triggers + always-on-top. Every trigger is
+                    // individually toggleable; all default ON.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "interface"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Mini Player")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Frameless 360×140 companion sharing the same player (no re-buffer). Restore with Esc, double-click, or ⤢.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Mini Player  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerEnabled : true
+                                accessibleLabel: "Mini Player"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerEnabled = on;
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Manual mini-player (Ctrl+M)  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerTriggerManual : true
+                                accessibleLabel: "Manual mini-player (Ctrl+M)"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerTriggerManual = on;
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Show on minimize  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerTriggerMinimize : true
+                                accessibleLabel: "Show on minimize"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerTriggerMinimize = on;
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Show when browsing library  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerTriggerNavigate : true
+                                accessibleLabel: "Show when browsing library"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerTriggerNavigate = on;
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Close button collapses to mini  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerTriggerCloseToMini : true
+                                accessibleLabel: "Close button collapses to mini"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerTriggerCloseToMini = on;
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Always on top in mini mode  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.miniPlayerAlwaysOnTop : true
+                                accessibleLabel: "Always on top in mini mode"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.miniPlayerAlwaysOnTop = on;
+                                }
+                            }
+                        }
+                    }
+
                     // ===== Placeholder pages =====
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance" && dlg.activePage !== "privacy"
+                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance" && dlg.activePage !== "privacy" && dlg.activePage !== "interface"
                         spacing: 12
                         Text {
                             text: dlg.pageTitle()
