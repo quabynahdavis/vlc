@@ -8,6 +8,8 @@ import "Ds" as Ds
 // Playlist/Open Media submenus (accordion), Quit VLC.
 // Wired actions emit signals (shortcuts live in Main.qml); submenu
 // entries are stubs until M3-M5.
+// M5: Open Media > Open network emits networkOpenRequested() so Main.qml
+// opens the NetworkOpenDialog stub (URL field + Open).
 Popup {
     id: menu
     width: Ds.Theme.menuWidth
@@ -25,6 +27,7 @@ Popup {
     signal nextRequested
     signal recordRequested
     signal hideUIRequested
+    signal networkOpenRequested
     signal quitRequested
 
     modal: false
@@ -157,7 +160,16 @@ Popup {
                             glyph: ""
                             label: modelData
                             indent: true
-                            onClicked: console.log("M1 menu stub:", label)
+                            onClicked: {
+                                // M5: Open Media > Open network opens the
+                                // network URL stub; the rest stay stubs.
+                                if (label === "Open network") {
+                                    menu.close();
+                                    menu.networkOpenRequested();
+                                } else {
+                                    console.log("M1 menu stub:", label);
+                                }
+                            }
                         }
                     }
                 }
