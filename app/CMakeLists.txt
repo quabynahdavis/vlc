@@ -57,6 +57,8 @@ endif()
 
 qt_add_executable(vlc-redesign-m0
   main.cpp
+  libraryservice.h
+  libraryservice.cpp
 )
 
 # Theme.qml is a QML singleton (import "Ds" as Ds -> Ds.Theme).
@@ -75,6 +77,10 @@ qt_add_qml_module(vlc-redesign-m0
     TransportBar.qml
     MenuRow.qml
     PlayerContextMenu.qml
+    LibraryView.qml
+    ThumbnailCard.qml
+    ThumbnailWorker.qml
+    CreatePlaylistDialog.qml
     Ds/Theme.qml
 )
 

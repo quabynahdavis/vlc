@@ -45,6 +45,10 @@ QtObject {
     readonly property int transportHeight: 60
     readonly property int menuWidth: 300
 
+    // Library grid (M2): 5 columns, 16px gap per Player-1.png.
+    readonly property int libraryColumns: 5
+    readonly property int gridGap: 16
+
     // Radii
     readonly property int radiusSmall: 6
     readonly property int radiusMedium: 8

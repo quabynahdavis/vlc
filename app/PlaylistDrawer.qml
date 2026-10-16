@@ -14,6 +14,65 @@ Rectangle {
     signal createPlaylistClicked
     signal playlistOpened(string name)
 
+    // M2: playlist rows come from LibraryService (SQLite when live),
+    // falling back to the M1 fixture. Refresh on CRUD + service changes.
+    function refresh() {
+        var items = ["Cool Songs", "Anime to Watch"];
+        try {
+            if (typeof LibraryService !== "undefined" && LibraryService.playlists) {
+                var p = LibraryService.playlists();
+                if (p && p.length > 0) {
+                    items = [];
+                    for (var i = 0; i < p.length; ++i)
+                        items.push(p[i]);
+                }
+            }
+        } catch (e) {
+            console.log("M2 drawer: service playlists failed, using fixture:", e);
+        }
+        playlistModel.clear();
+        for (var j = 0; j < items.length; ++j)
+            playlistModel.append({ label: items[j] });
+    }
+
+    ListModel {
+        id: playlistModel
+    }
+
+    Menu {
+        id: rowMenu
+        property string targetName: ""
+        MenuItem {
+            text: "Rename (stub)"
+            onTriggered: {
+                var to = rowMenu.targetName + " (renamed)";
+                try {
+                    if (typeof LibraryService !== "undefined" && LibraryService.renamePlaylist)
+                        LibraryService.renamePlaylist(rowMenu.targetName, to);
+                } catch (e) {
+                    console.log("M2 rename: service unavailable:", e);
+                }
+                console.log("M2 playlist renamed (stub):", rowMenu.targetName, "->", to);
+                drawer.refresh();
+            }
+        }
+        MenuItem {
+            text: "Delete (stub)"
+            onTriggered: {
+                try {
+                    if (typeof LibraryService !== "undefined" && LibraryService.deletePlaylist)
+                        LibraryService.deletePlaylist(rowMenu.targetName);
+                } catch (e) {
+                    console.log("M2 delete: service unavailable:", e);
+                }
+                console.log("M2 playlist deleted (stub):", rowMenu.targetName);
+                drawer.refresh();
+            }
+        }
+    }
+
+    Component.onCompleted: refresh()
+
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: 16
@@ -121,7 +180,7 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: "2 items"
+                text: playlistModel.count + " items"
                 color: Ds.Theme.textHint
                 font.pixelSize: 12
             }
@@ -191,25 +250,58 @@ Rectangle {
             color: Ds.Theme.divider
         }
 
-        // Rows.
+        // Rows: Create playlist + service-backed playlist rows (M2 CRUD stubs).
         ColumnLayout {
             Layout.fillWidth: true
             Layout.topMargin: 8
             spacing: 2
 
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 40
+                Rectangle {
+                    anchors.fill: parent
+                    color: createHover.containsMouse ? Ds.Theme.bgHover : "transparent"
+                    radius: Ds.Theme.radiusMedium
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 10
+                        Text {
+                            text: "+"
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 15
+                            Layout.preferredWidth: 18
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Create playlist"
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 14
+                            elide: Text.ElideRight
+                        }
+                    }
+                    MouseArea {
+                        id: createHover
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            console.log("M2 create playlist dialog");
+                            drawer.createPlaylistClicked();
+                        }
+                    }
+                }
+            }
+
             Repeater {
-                model: [
-                    { kind: "create", glyph: "+", label: "Create playlist" },
-                    { kind: "list", glyph: "☰", label: "Cool Songs" },
-                    { kind: "list", glyph: "☰", label: "Anime to Watch" }
-                ]
+                model: playlistModel
                 delegate: Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
-                    required property var modelData
-
-                    property bool isCreate: modelData.kind === "create"
-                    property string rowLabel: modelData.label
+                    required property string label
 
                     Rectangle {
                         anchors.fill: parent
@@ -221,8 +313,8 @@ Rectangle {
                             anchors.rightMargin: 10
                             spacing: 10
                             Text {
-                                text: isCreate ? "+" : modelData.glyph
-                                color: isCreate ? Ds.Theme.textSecondary : Ds.Theme.textSecondary
+                                text: "☰"
+                                color: Ds.Theme.textSecondary
                                 font.pixelSize: 15
                                 Layout.preferredWidth: 18
                                 horizontalAlignment: Text.AlignHCenter
@@ -230,8 +322,8 @@ Rectangle {
                             }
                             Text {
                                 Layout.fillWidth: true
-                                text: rowLabel
-                                color: isCreate ? Ds.Theme.textHint : Ds.Theme.textPrimary
+                                text: label
+                                color: Ds.Theme.textPrimary
                                 font.pixelSize: 14
                                 elide: Text.ElideRight
                             }
@@ -240,13 +332,14 @@ Rectangle {
                             id: rowHover
                             anchors.fill: parent
                             hoverEnabled: true
-                            onClicked: {
-                                if (isCreate) {
-                                    console.log("M1 create playlist (stub)");
-                                    drawer.createPlaylistClicked();
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton) {
+                                    rowMenu.targetName = label;
+                                    rowMenu.popup();
                                 } else {
-                                    console.log("M1 open playlist (stub):", rowLabel);
-                                    drawer.playlistOpened(rowLabel);
+                                    console.log("M2 open playlist (stub):", label);
+                                    drawer.playlistOpened(label);
                                 }
                             }
                         }

@@ -25,7 +25,9 @@ ApplicationWindow {
     property bool isRecording: false
     property bool uiHidden: false
     property bool drawerOpen: true
-    property string activeNav: "playlist"
+    property string activeNav: "files"
+    // M2: main view switch — Player (M1 stage + drawer) vs Library grid.
+    property string currentView: "library"
     property real volumeLevel: 0.8
     property bool muted: false
 
@@ -34,7 +36,10 @@ ApplicationWindow {
     property int demoPosition: 130
     property int demoDuration: 1540
 
-    property bool hasMedia: player.source !== ""
+    // NOTE (M2): strict `!==` between a url and "" is always true in QML
+    // (no coercion), so compare the string form to keep the M1 empty-stage
+    // placeholder working.
+    property bool hasMedia: player.source.toString() !== ""
     readonly property int elapsedSec: (hasMedia && player.duration > 0)
                                       ? Math.floor(player.position / 1000)
                                       : demoPosition
@@ -134,6 +139,26 @@ ApplicationWindow {
     Shortcut { sequence: "R"; onActivated: root.toggleRecord() }
     Shortcut { sequence: "Ctrl+\\"; onActivated: root.toggleHideUI() }
     Shortcut { sequence: "Ctrl+Q"; onActivated: Qt.quit() }
+    // M2 view switch: Ctrl+1 Player, Ctrl+2 Library.
+    Shortcut { sequence: "Ctrl+1"; onActivated: root.currentView = "player" }
+    Shortcut { sequence: "Ctrl+2"; onActivated: root.currentView = "library" }
+
+    // M2 create-playlist dialog, shared by rail/drawer in both views.
+    CreatePlaylistDialog {
+        id: createDialog
+        onCreated: (name) => {
+            drawer.refresh();
+            console.log("M2 playlist dialog accepted:", name);
+        }
+    }
+
+    Connections {
+        target: typeof LibraryService !== "undefined" ? LibraryService : null
+        function onPlaylistsChanged() { drawer.refresh(); }
+        function onThumbnailReady(path, hint) {
+            console.log("M2 thumbnail ready:", path, hint);
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -142,6 +167,7 @@ ApplicationWindow {
         TitleBar {
             Layout.fillWidth: true
             visible: !root.uiHidden
+            breadcrumb: root.currentView === "player" ? "Videos" : "Videos › Shows › The Wand › S01"
             maximized: root.visibility === Window.Maximized
             fullscreen: root.visibility === Window.FullScreen
             onMinimizeClicked: root.showMinimized()
@@ -172,27 +198,43 @@ ApplicationWindow {
                 onNavSelected: (nav) => {
                     if (nav === "playlist") {
                         root.activeNav = nav;
-                        root.drawerOpen = !root.drawerOpen;
+                        root.currentView = "player";
+                        root.drawerOpen = true;
                     } else if (nav === "add") {
-                        console.log("M1 add item (stub)");
+                        if (root.currentView === "library")
+                            createDialog.open();
+                        else
+                            console.log("M1 add item (stub)");
                     } else {
                         root.activeNav = nav;
-                        console.log("M1 nav (stub, lands in M2):", nav);
+                        root.currentView = "library";
+                        console.log("M2 library nav (fixture: The Wand S01):", nav);
                     }
                 }
             }
 
             PlaylistDrawer {
+                id: drawer
                 Layout.fillHeight: true
-                visible: !root.uiHidden && root.drawerOpen
+                // M2: drawer belongs to the Player view; the Library grid
+                // takes the full width like Player-1.png.
+                visible: !root.uiHidden && root.drawerOpen && root.currentView === "player"
+                onCreatePlaylistClicked: createDialog.open()
+                onPlaylistOpened: (name) => console.log("M2 open playlist (stub):", name)
             }
 
-            // ---- Center video stage ----
-            Rectangle {
-                id: stage
+            // ---- Center: Player stage (M1) vs Library grid (M2) ----
+            StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: Ds.Theme.stageCanvas
+                currentIndex: root.currentView === "player" ? 0 : 1
+
+                // 0: M1 player stage (QtMultimedia preview wiring intact).
+                Rectangle {
+                    id: stage
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: Ds.Theme.stageCanvas
 
                 VideoOutput {
                     id: videoOut
@@ -278,6 +320,25 @@ ApplicationWindow {
                     onClicked: (mouse) => {
                         if (mouse.button === Qt.RightButton)
                             contextMenu.showAt(stage, mouse.x, mouse.y);
+                    }
+                }
+                }
+
+                // 1: M2 library grid (Videos > Shows > The Wand > S01).
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: Ds.Theme.bgApp
+                    LibraryView {
+                        anchors.fill: parent
+                        onOpenItem: (fileName) => {
+                            console.log("M2 play from library (stub, engine lands in M1):", fileName);
+                            root.currentView = "player";
+                            root.activeNav = "playlist";
+                            root.drawerOpen = true;
+                        }
+                        onBackRequested: console.log("M2 library back (stub)")
+                        onForwardRequested: console.log("M2 library forward (stub)")
                     }
                 }
             }

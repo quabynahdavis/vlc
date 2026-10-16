@@ -1,9 +1,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QUrl>
 #include <QDebug>
 
 #include <vlc/vlc.h>
+
+#include "libraryservice.h"
 
 // M0 hello-video entry point.
 // Usage: ./vlc-redesign-m0 [media-file-or-url]
@@ -40,6 +43,13 @@ int main(int argc, char *argv[])
     }
 
     QQmlApplicationEngine engine;
+
+    // M2 library store: SQLite schema ready before QML binds the fixture.
+    LibraryService libraryService;
+    libraryService.ensureSchema();
+    engine.rootContext()->setContextProperty(QStringLiteral("LibraryService"),
+                                             &libraryService);
+
     if (initialSource.isValid() && !initialSource.isEmpty()) {
         engine.setInitialProperties({{QStringLiteral("initialSource"), initialSource}});
     }
