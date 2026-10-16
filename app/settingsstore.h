@@ -14,6 +14,9 @@
 // M5 adds lowPowerMode (Performance page): when ON, Theme.reduceEffects is
 // bound true and ThumbnailCard skips Canvas doodles/gradients to hold
 // 60fps on weak GPUs. Schema v5 migrates the new key with default OFF.
+// M6 adds telemetryEnabled (Privacy page, default OFF — telemetry stays
+// opt-in), updateAvailable/updateVersion (auto-update stub), and
+// exportLogBundle() (delegates to Logger). Schema v6 migrates the new keys.
 class SettingsStore : public QObject
 {
     Q_OBJECT
@@ -30,6 +33,10 @@ class SettingsStore : public QObject
     Q_PROPERTY(QString logFile READ logFile WRITE setLogFile NOTIFY logFileChanged)
     Q_PROPERTY(QString logLevel READ logLevel WRITE setLogLevel NOTIFY logLevelChanged)
     Q_PROPERTY(bool lowPowerMode READ lowPowerMode WRITE setLowPowerMode NOTIFY lowPowerModeChanged)
+    // M6: privacy opt-in (default OFF) + auto-update stub state.
+    Q_PROPERTY(bool telemetryEnabled READ telemetryEnabled WRITE setTelemetryEnabled NOTIFY telemetryEnabledChanged)
+    Q_PROPERTY(bool updateAvailable READ updateAvailable NOTIFY updateAvailableChanged)
+    Q_PROPERTY(QString updateVersion READ updateVersion NOTIFY updateVersionChanged)
 
     // Audio defaults (EQ + spatial rows).
     Q_PROPERTY(bool eqEnabled READ eqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
@@ -81,6 +88,12 @@ public:
     Q_INVOKABLE void applyVideoAdjust();
     Q_INVOKABLE void applyAudioFilters();
 
+    // M6 diagnostics: export a log bundle via Logger (returns bundle path).
+    Q_INVOKABLE QString exportLogBundle(const QString &destPath = QString());
+    // M6 auto-update stub: consults checkUpdates, then reports "up to date".
+    // Real feed fetch + signature verify + installer relaunch is a follow-up.
+    Q_INVOKABLE void checkForUpdates();
+
     // Typed getters/setters.
     QString language() const;
     void setLanguage(const QString &v);
@@ -104,6 +117,12 @@ public:
     void setLogLevel(const QString &v);
     bool lowPowerMode() const;
     void setLowPowerMode(bool v);
+
+    bool telemetryEnabled() const;
+    void setTelemetryEnabled(bool v);
+
+    bool updateAvailable() const;
+    QString updateVersion() const;
 
     bool eqEnabled() const;
     void setEqEnabled(bool v);
@@ -152,6 +171,9 @@ signals:
     void logFileChanged();
     void logLevelChanged();
     void lowPowerModeChanged();
+    void telemetryEnabledChanged();
+    void updateAvailableChanged();
+    void updateVersionChanged();
     void eqEnabledChanged();
     void eqPresetChanged();
     void eqBandsChanged();
@@ -187,6 +209,11 @@ private:
     QString m_logFile;
     QString m_logLevel = QStringLiteral("Errors only");
     bool m_lowPowerMode = false;
+    // M6: telemetry stays OFF unless the user opts in on the Privacy page.
+    bool m_telemetryEnabled = false;
+    // M6 auto-update stub state (no update known until checkForUpdates()).
+    bool m_updateAvailable = false;
+    QString m_updateVersion;
 
     bool m_eqEnabled = false;
     QString m_eqPreset = QStringLiteral("None");

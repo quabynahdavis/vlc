@@ -1,11 +1,13 @@
 #include "settingsstore.h"
 
+#include "logger.h"
+
 #include <QDebug>
 #include <QSettings>
 
 namespace {
 
-const int kSchemaVersion = 5;
+const int kSchemaVersion = 6;
 
 QVariantList defaultEqBands()
 {
@@ -53,6 +55,9 @@ void SettingsStore::resetToDefaults()
     m_logFile.clear();
     m_logLevel = QStringLiteral("Errors only");
     m_lowPowerMode = false;
+    m_telemetryEnabled = false;
+    m_updateAvailable = false;
+    m_updateVersion.clear();
     m_eqEnabled = false;
     m_eqPreset = QStringLiteral("None");
     m_eqBands = defaultEqBands();
@@ -74,6 +79,9 @@ void SettingsStore::resetToDefaults()
     emit accentColorChanged();
     emit iconPackChanged();
     emit lowPowerModeChanged();
+    emit telemetryEnabledChanged();
+    emit updateAvailableChanged();
+    emit updateVersionChanged();
     emit eqBandsChanged();
     emit subDelayChanged();
     qInfo() << "M3 settings: reset to defaults (stub)";
@@ -105,8 +113,12 @@ QStringList SettingsStore::eqBandNames() const
 
 QStringList SettingsStore::languageOptions() const
 {
+    // M6 i18n: English ships; French/German/Spanish are QTranslator stubs
+    // (no .qm bundled yet — see app/i18n/); Pseudo-RTL exercises layout
+    // mirroring + bidi without a translation file.
     return QStringList{QStringLiteral("English"), QStringLiteral("French"),
-                       QStringLiteral("German"), QStringLiteral("Spanish")};
+                       QStringLiteral("German"), QStringLiteral("Spanish"),
+                       QStringLiteral("Pseudo-RTL (test)")};
 }
 
 QStringList SettingsStore::themeOptions() const
@@ -188,6 +200,31 @@ void SettingsStore::applyAudioFilters()
 {
     qInfo() << "M3 applyAudioFilters (stub): compressor/reverb/delay via"
             << "libvlc_audio_filter in M4";
+}
+
+// --- M6 diagnostics + update stubs (Logger owns the file/level state) ---
+QString SettingsStore::exportLogBundle(const QString &destPath)
+{
+    // Keep Logger in sync with the latest toggle/level before exporting.
+    Logger::instance().install(m_saveLog, m_logFile, m_logLevel);
+    const QString bundle = Logger::instance().exportLogBundle(destPath);
+    qInfo() << "M6 diagnostics: exportLogBundle ->" << bundle;
+    return bundle;
+}
+
+void SettingsStore::checkForUpdates()
+{
+    if (!m_checkUpdates) {
+        qInfo() << "M6 update: skipped (automatic checks OFF; enable in Startup)";
+        return;
+    }
+    // Stub feed: report up-to-date. Real HTTPS feed + signature verify +
+    // installer relaunch lands after M6 (see README Packaging notes).
+    m_updateAvailable = false;
+    m_updateVersion.clear();
+    qInfo() << "M6 update: checked (stub feed) — you are up to date";
+    emit updateAvailableChanged();
+    emit updateVersionChanged();
 }
 
 // --- Typed accessors (persist + log + notify) ---
@@ -281,6 +318,7 @@ void SettingsStore::setSaveLog(bool v)
     m_saveLog = v;
     put(QStringLiteral("m3/diagnostics/saveLog"), v);
     qInfo() << "M3 settings: diagnostics/saveLog =" << v;
+    Logger::instance().setSaveLog(v);
     emit saveLogChanged();
 }
 
@@ -303,6 +341,7 @@ void SettingsStore::setLogLevel(const QString &v)
     m_logLevel = v.isEmpty() ? QStringLiteral("Errors only") : v;
     put(QStringLiteral("m3/diagnostics/logLevel"), m_logLevel);
     qInfo() << "M3 settings: diagnostics/logLevel =" << m_logLevel;
+    Logger::instance().setLogLevel(m_logLevel);
     emit logLevelChanged();
 }
 
@@ -317,6 +356,22 @@ void SettingsStore::setLowPowerMode(bool v)
             << "(stub: disables Canvas FX + gradients for 60fps)";
     emit lowPowerModeChanged();
 }
+
+bool SettingsStore::telemetryEnabled() const { return m_telemetryEnabled; }
+void SettingsStore::setTelemetryEnabled(bool v)
+{
+    if (m_telemetryEnabled == v)
+        return;
+    m_telemetryEnabled = v;
+    put(QStringLiteral("m6/privacy/telemetry"), v);
+    // Privacy default OFF: enabling is an explicit opt-in; nothing phones
+    // home in M6 (no network client ships — see README follow-ups).
+    qInfo() << "M6 privacy: telemetryEnabled =" << v << "(opt-in, no-op stub)";
+    emit telemetryEnabledChanged();
+}
+
+bool SettingsStore::updateAvailable() const { return m_updateAvailable; }
+QString SettingsStore::updateVersion() const { return m_updateVersion; }
 
 bool SettingsStore::eqEnabled() const { return m_eqEnabled; }
 void SettingsStore::setEqEnabled(bool v)
@@ -522,6 +577,7 @@ void SettingsStore::loadAll()
     m_textColor = s.value(QStringLiteral("m3/subtitles/textColor"), m_textColor).toString();
     m_outlineColor = s.value(QStringLiteral("m3/subtitles/outlineColor"), m_outlineColor).toString();
     m_lowPowerMode = s.value(QStringLiteral("m5/performance/lowPower"), m_lowPowerMode).toBool();
+    m_telemetryEnabled = s.value(QStringLiteral("m6/privacy/telemetry"), m_telemetryEnabled).toBool();
 }
 
 void SettingsStore::migrateIfNeeded()
@@ -546,6 +602,11 @@ void SettingsStore::migrateIfNeeded()
                 << "(add performance/lowPower=false, keep M3/M4 keys)";
         if (!s.contains(QStringLiteral("m5/performance/lowPower")))
             s.setValue(QStringLiteral("m5/performance/lowPower"), false);
+    } else if (stored == 5) {
+        qInfo() << "M6 SettingsStore: migrating schema 5 -> 6"
+                << "(add privacy/telemetry=false, keep M3/M4/M5 keys)";
+        if (!s.contains(QStringLiteral("m6/privacy/telemetry")))
+            s.setValue(QStringLiteral("m6/privacy/telemetry"), false);
     } else if (stored != 3) {
         qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
                 << "(stub: namespaced keys, no legacy import)";
