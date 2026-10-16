@@ -1,33 +1,49 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import QtMultimedia
 import "Ds" as Ds
 
-// M0 hello-video: black stage + minimal transport bar.
-// Spec: bg #0E0E0E, accent #D37918, prev/play/next,
-// time labels 00:02:10 / 00:25:40, scrubber Slider.
+// M1 player shell: titlebar + icon rail + Playlists drawer + video
+// stage + single-row transport + right-click context menu + Hide-UI mode.
+// Preserves the M0 MediaPlayer wiring (QtMultimedia preview bound to
+// `initialSource`; libVLC render path lands in a later milestone).
 ApplicationWindow {
     id: root
     visible: true
     width: 1280
     height: 720
-    minimumWidth: 640
-    minimumHeight: 400
-    title: "VLC Redesign — M0 hello-video"
+    minimumWidth: 960
+    minimumHeight: 600
+    title: "VLC Media Player"
     color: Ds.Theme.bgApp
 
-    // Set from main.cpp via setInitialProperties when CLI arg given.
-    // Stub ok: wired to QtMultimedia MediaPlayer for M0 preview;
-    // libVLC render path lands in M1+.
+    // Set from main.cpp via setInitialProperties when a CLI arg is given.
     property url initialSource: ""
     property bool isPlaying: false
+    property bool isRecording: false
+    property bool uiHidden: false
+    property bool drawerOpen: true
+    property string activeNav: "playlist"
+    property real volumeLevel: 0.8
+    property bool muted: false
 
-    // M0 demo position: 00:02:10 (130s) of 00:25:40 (1540s).
+    // Demo position when no media is loaded: 00:02:10 of 00:25:40,
+    // ticking live while "playing" so the transport stays live-bound.
     property int demoPosition: 130
     property int demoDuration: 1540
 
-    function formatTime(s: int): string {
+    property bool hasMedia: player.source !== ""
+    readonly property int elapsedSec: (hasMedia && player.duration > 0)
+                                      ? Math.floor(player.position / 1000)
+                                      : demoPosition
+    readonly property int totalSec: (hasMedia && player.duration > 0)
+                                    ? Math.floor(player.duration / 1000)
+                                    : demoDuration
+
+    function formatTime(s) {
+        s = Math.max(0, Math.floor(s));
         var h = Math.floor(s / 3600);
         var m = Math.floor((s % 3600) / 60);
         var sec = s % 60;
@@ -36,198 +52,276 @@ ApplicationWindow {
              + (sec < 10 ? "0" + sec : sec);
     }
 
+    function togglePlay() {
+        if (root.hasMedia) {
+            if (root.isPlaying)
+                player.pause();
+            else
+                player.play();
+            // isPlaying syncs back via onPlaybackStateChanged below.
+        } else {
+            root.isPlaying = !root.isPlaying;
+            console.log("M1 play toggle (demo, no media), playing:", root.isPlaying);
+        }
+    }
+
+    function stopPlayback() {
+        if (root.hasMedia)
+            player.stop();
+        root.isPlaying = false;
+        console.log("M1 stop");
+    }
+
+    function prevItem() {
+        console.log("M1 previous item (stub: playlist lands in M2)");
+    }
+
+    function nextItem() {
+        console.log("M1 next item (stub: playlist lands in M2)");
+    }
+
+    function toggleRecord() {
+        root.isRecording = !root.isRecording;
+        console.log("M1 record (stub), recording:", root.isRecording);
+    }
+
+    function toggleHideUI() {
+        root.uiHidden = !root.uiHidden;
+        console.log("M1 hide-UI, hidden:", root.uiHidden);
+    }
+
+    function seekTo(seconds) {
+        if (root.hasMedia && player.seekable && player.duration > 0)
+            player.setPosition(Math.max(0, Math.min(1, seconds * 1000 / player.duration)));
+        else
+            root.demoPosition = Math.max(0, Math.min(root.demoDuration, Math.floor(seconds)));
+    }
+
+    AudioOutput {
+        id: audioOut
+        volume: root.volumeLevel
+        muted: root.muted
+    }
+
     MediaPlayer {
         id: player
         videoOutput: videoOut
-        // M0: QtMultimedia preview only. Empty => black stage + placeholder.
+        audioOutput: audioOut
+        // M1: QtMultimedia preview wiring preserved from M0.
         source: root.initialSource
-        onErrorOccurred: (error, errorString) => console.log("M0 player:", errorString)
+        onErrorOccurred: (error, errorString) => console.log("M1 player:", errorString)
+        onPlaybackStateChanged: {
+            if (root.hasMedia)
+                root.isPlaying = (playbackState === MediaPlayer.PlayingState);
+        }
     }
+
+    // Demo ticker: advances the stub timecode while "playing" with no media.
+    Timer {
+        interval: 1000
+        running: root.isPlaying && !root.hasMedia
+        repeat: true
+        onTriggered: {
+            root.demoPosition = (root.demoPosition + 1) % (root.demoDuration + 1);
+        }
+    }
+
+    // Wired shortcuts (menu shows the same hints; the rest are stubs).
+    Shortcut { sequence: "Space"; onActivated: root.togglePlay() }
+    Shortcut { sequence: "S"; onActivated: root.stopPlayback() }
+    Shortcut { sequence: "P"; onActivated: root.prevItem() }
+    Shortcut { sequence: "N"; onActivated: root.nextItem() }
+    Shortcut { sequence: "R"; onActivated: root.toggleRecord() }
+    Shortcut { sequence: "Ctrl+\\"; onActivated: root.toggleHideUI() }
+    Shortcut { sequence: "Ctrl+Q"; onActivated: Qt.quit() }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // ---- Video stage (black) ----
-        Rectangle {
-            id: stage
-            color: Ds.Theme.stage
+        TitleBar {
+            Layout.fillWidth: true
+            visible: !root.uiHidden
+            maximized: root.visibility === Window.Maximized
+            fullscreen: root.visibility === Window.FullScreen
+            onMinimizeClicked: root.showMinimized()
+            onMaximizeClicked: {
+                if (root.visibility === Window.Maximized)
+                    root.showNormal();
+                else
+                    root.showMaximized();
+            }
+            onFullscreenClicked: {
+                if (root.visibility === Window.FullScreen)
+                    root.showNormal();
+                else
+                    root.showFullScreen();
+            }
+            onCloseClicked: root.close()
+        }
+
+        RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            spacing: 0
 
-            VideoOutput {
-                id: videoOut
-                anchors.fill: parent
-                fillMode: VideoOutput.PreserveAspectFit
-            }
-
-            // Placeholder when no media (M0 hello-video state).
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: 8
-                visible: player.source == ""
-                Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: "No video — M0 hello-video"
-                    color: Ds.Theme.textSecondary
-                    font.pixelSize: 16
-                }
-                Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: root.initialSource != "" ? root.initialSource : "Run with: ./vlc-redesign-m0 <file>"
-                    color: Ds.Theme.textSecondary
-                    opacity: 0.7
-                    font.pixelSize: 12
+            IconRail {
+                Layout.fillHeight: true
+                visible: !root.uiHidden
+                active: root.activeNav
+                onNavSelected: (nav) => {
+                    if (nav === "playlist") {
+                        root.activeNav = nav;
+                        root.drawerOpen = !root.drawerOpen;
+                    } else if (nav === "add") {
+                        console.log("M1 add item (stub)");
+                    } else {
+                        root.activeNav = nav;
+                        console.log("M1 nav (stub, lands in M2):", nav);
+                    }
                 }
             }
 
-            // Minimal overlay play affordance for M0.
-            RoundButton {
-                anchors.centerIn: parent
-                visible: player.source != "" && !root.isPlaying
-                text: "▶"
-                font.pixelSize: 22
-                width: 64; height: 64
-                onClicked: { player.play(); root.isPlaying = true; }
+            PlaylistDrawer {
+                Layout.fillHeight: true
+                visible: !root.uiHidden && root.drawerOpen
+            }
+
+            // ---- Center video stage ----
+            Rectangle {
+                id: stage
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                color: Ds.Theme.stageCanvas
+
+                VideoOutput {
+                    id: videoOut
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectFit
+                }
+
+                // Placeholder when no media is loaded.
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    visible: !root.hasMedia
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "No video — M1 player shell"
+                        color: Ds.Theme.textSecondary
+                        font.pixelSize: 16
+                    }
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.initialSource != "" ? root.initialSource : "Run with: ./vlc-redesign-m0 <file>"
+                        color: Ds.Theme.textSecondary
+                        opacity: 0.7
+                        font.pixelSize: 12
+                    }
+                }
+
+                // Overlay play affordance (preserved from M0).
+                RoundButton {
+                    anchors.centerIn: parent
+                    visible: root.hasMedia && !root.isPlaying
+                    text: "▶"
+                    font.pixelSize: 22
+                    width: 64
+                    height: 64
+                    focusPolicy: Qt.NoFocus
+                    onClicked: root.togglePlay()
+                }
+
+                // Hide-UI escape hatch.
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.topMargin: 16
+                    visible: root.uiHidden
+                    width: hintRow.implicitWidth + 32
+                    height: 40
+                    radius: Ds.Theme.radiusMedium
+                    color: Ds.Theme.bgSurface
+                    border.color: Ds.Theme.border
+                    RowLayout {
+                        id: hintRow
+                        anchors.centerIn: parent
+                        spacing: 12
+                        Text {
+                            text: "UI hidden — press Ctrl + \\ to show"
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 13
+                        }
+                        Button {
+                            text: "Show UI"
+                            focusPolicy: Qt.NoFocus
+                            onClicked: root.toggleHideUI()
+                            contentItem: Text {
+                                text: parent.text
+                                color: Ds.Theme.accentOn
+                                font.pixelSize: 13
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            background: Rectangle {
+                                color: parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent
+                                radius: Ds.Theme.radiusSmall
+                            }
+                        }
+                    }
+                }
+
+                // Right-click context menu.
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.RightButton)
+                            contextMenu.showAt(stage, mouse.x, mouse.y);
+                    }
+                }
             }
         }
 
-        // ---- Transport bar ----
-        Rectangle {
-            color: Ds.Theme.bgSurface
+        TransportBar {
             Layout.fillWidth: true
-            Layout.preferredHeight: 76
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                anchors.topMargin: 8
-                anchors.bottomMargin: 8
-                spacing: 4
-
-                // Scrubber row: elapsed | slider | total
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
-
-                    Text {
-                        text: formatTime(player.source != "" ? Math.floor(player.position / 1000) : root.demoPosition)
-                        color: Ds.Theme.textSecondary
-                        font.pixelSize: 12
-                        font.family: "monospace"
-                    }
-
-                    Slider {
-                        id: scrubber
-                        Layout.fillWidth: true
-                        from: 0
-                        to: player.source != "" && player.duration > 0 ? player.duration / 1000 : root.demoDuration
-                        value: player.source != "" && player.duration > 0 ? player.position / 1000 : root.demoPosition
-                        onMoved: {
-                            if (player.source != "" && player.seekable)
-                                player.setPosition(value * 1000 / player.duration);
-                            else
-                                root.demoPosition = Math.floor(value);
-                        }
-
-                        // Accent styling (#D37918).
-                        background: Rectangle {
-                            x: scrubber.leftPadding
-                            y: scrubber.topPadding + scrubber.availableHeight / 2 - height / 2
-                            implicitWidth: 200
-                            implicitHeight: 4
-                            width: scrubber.availableWidth
-                            height: implicitHeight
-                            radius: 2
-                            color: "#333333"
-                            Rectangle {
-                                width: scrubber.visualPosition * parent.width
-                                height: parent.height
-                                radius: 2
-                                color: Ds.Theme.accent
-                            }
-                        }
-                        handle: Rectangle {
-                            x: scrubber.leftPadding + scrubber.visualPosition * (scrubber.availableWidth - width)
-                            y: scrubber.topPadding + scrubber.availableHeight / 2 - height / 2
-                            implicitWidth: 14
-                            implicitHeight: 14
-                            radius: 7
-                            color: Ds.Theme.accent
-                            border.color: Ds.Theme.bgApp
-                        }
-                    }
-
-                    Text {
-                        text: formatTime(player.source != "" && player.duration > 0 ? Math.floor(player.duration / 1000) : root.demoDuration)
-                        color: Ds.Theme.textSecondary
-                        font.pixelSize: 12
-                        font.family: "monospace"
-                    }
-                }
-
-                // Buttons row: prev / play / next
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: 12
-
-                    Button {
-                        text: "⏮"
-                        font.pixelSize: 16
-                        flat: true
-                        onClicked: console.log("M0 prev (stub)")
-                        contentItem: Text {
-                            text: parent.text
-                            color: Ds.Theme.textPrimary
-                            font: parent.font
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        background: Rectangle { color: "transparent" }
-                    }
-
-                    Button {
-                        text: root.isPlaying ? "⏸" : "▶"
-                        font.pixelSize: 18
-                        width: 48; height: 36
-                        onClicked: {
-                            if (player.source != "") {
-                                if (root.isPlaying) player.pause();
-                                else player.play();
-                            }
-                            root.isPlaying = !root.isPlaying;
-                            console.log("M0 play toggle (stub), playing:", root.isPlaying);
-                        }
-                        contentItem: Text {
-                            text: parent.text
-                            color: Ds.Theme.accentOn
-                            font: parent.font
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        background: Rectangle {
-                            color: parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent
-                            radius: 6
-                        }
-                    }
-
-                    Button {
-                        text: "⏭"
-                        font.pixelSize: 16
-                        flat: true
-                        onClicked: console.log("M0 next (stub)")
-                        contentItem: Text {
-                            text: parent.text
-                            color: Ds.Theme.textPrimary
-                            font: parent.font
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        background: Rectangle { color: "transparent" }
-                    }
-                }
+            visible: !root.uiHidden
+            elapsedText: root.formatTime(root.elapsedSec)
+            totalText: root.formatTime(root.totalSec)
+            from: 0
+            to: root.totalSec
+            value: root.elapsedSec
+            playing: root.isPlaying
+            volume: root.volumeLevel
+            muted: root.muted
+            onPlayClicked: root.togglePlay()
+            onPrevClicked: root.prevItem()
+            onNextClicked: root.nextItem()
+            onSeekRequested: (seconds) => root.seekTo(seconds)
+            onVolumeRequested: (level) => {
+                root.volumeLevel = level;
+                if (level > 0)
+                    root.muted = false;
             }
+            onMuteToggled: root.muted = !root.muted
+            onEqClicked: console.log("M1 equalizer panel (stub, lands in M4)")
+            onSubsClicked: console.log("M1 subtitles panel (stub, lands in M4)")
+            onSettingsClicked: console.log("M1 settings (stub, lands in M3)")
+            onQueueClicked: console.log("M1 queue (stub, lands in M2)")
         }
+    }
+
+    PlayerContextMenu {
+        id: contextMenu
+        maxMenuHeight: Math.max(320, root.height - 140)
+        playing: root.isPlaying
+        recording: root.isRecording
+        onPlayRequested: root.togglePlay()
+        onStopRequested: root.stopPlayback()
+        onPrevRequested: root.prevItem()
+        onNextRequested: root.nextItem()
+        onRecordRequested: root.toggleRecord()
+        onHideUIRequested: root.toggleHideUI()
+        onQuitRequested: Qt.quit()
     }
 }

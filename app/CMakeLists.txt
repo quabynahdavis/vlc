@@ -69,6 +69,12 @@ qt_add_qml_module(vlc-redesign-m0
   VERSION 1.0
   QML_FILES
     Main.qml
+    TitleBar.qml
+    IconRail.qml
+    PlaylistDrawer.qml
+    TransportBar.qml
+    MenuRow.qml
+    PlayerContextMenu.qml
     Ds/Theme.qml
 )
 
