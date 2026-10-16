@@ -38,6 +38,19 @@ QtObject {
     readonly property color volumeFill: "#B7C82E"
     readonly property color wedgeTrack: "#2E2E2E"
 
+    // M3 settings tokens (Subtitles.png / Settings-global.png).
+    // Subtitle appearance defaults; dialog chrome uses bg* above.
+    readonly property color subtitleText: "#B8B8B8"
+    readonly property color subtitleOutline: "#0C0C0C"
+    readonly property color colorPreview: "#FF0000"
+
+    // 9 accent swatches in the Appearance row (VLC orange selected).
+    readonly property var accentSwatches: [
+        "#D37918", "#B83A2E", "#A68A1A",
+        "#2E9E4A", "#1A9EB8", "#2E5AB8",
+        "#7A3EB8", "#C2427E", "#8A8A8A"
+    ]
+
     // Layout (px)
     readonly property int railWidth: 60
     readonly property int drawerWidth: 300
@@ -48,6 +61,12 @@ QtObject {
     // Library grid (M2): 5 columns, 16px gap per Player-1.png.
     readonly property int libraryColumns: 5
     readonly property int gridGap: 16
+
+    // M3 settings layout: modal caps at 1080px, left taxonomy 280px.
+    readonly property int settingsMaxWidth: 1080
+    readonly property int taxonomyWidth: 280
+    readonly property int inputHeight: 44
+    readonly property int effectsWidth: 420
 
     // Radii
     readonly property int radiusSmall: 6
