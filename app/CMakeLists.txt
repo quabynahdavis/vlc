@@ -92,6 +92,9 @@ qt_add_qml_module(vlc-redesign-m0
     GlobalSettingsDialog.qml
     EffectsDock.qml
     SubtitlesPanel.qml
+    ToastHost.qml
+    ErrorDialog.qml
+    NetworkOpenDialog.qml
     Ds/Theme.qml
   RESOURCES
     icons/two-tone/prev.svg
