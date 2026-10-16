@@ -6,6 +6,10 @@ import "Ds" as Ds
 // filename label below, orange progress underline when watched.
 // Placeholder art is procedural (gradient + Canvas doodle + ghost episode
 // tag) — no binary assets. Sized by the owning GridView cell.
+// M5 perf: when Ds.Theme.reduceEffects is true (low-power mode), the
+// gradient wash + Canvas doodle are skipped and the tile paints a flat
+// Theme.stageGhost so the grid holds 60fps @1k rows on weak GPUs. The
+// ghost tag + progress underline stay (cheap Text/Rect, no repaint cost).
 Item {
     id: card
 
@@ -50,9 +54,11 @@ Item {
             border.width: hoverArea.containsMouse ? 2 : 1
 
             // Gradient wash keyed off the episode seed.
+            // M5 low-power stub: hidden when reduceEffects (flat tile).
             Rectangle {
                 anchors.fill: parent
                 opacity: 0.38
+                visible: !Ds.Theme.reduceEffects
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: "transparent" }
                     GradientStop { position: 1.0; color: card.tint(card.seed) }
@@ -60,10 +66,12 @@ Item {
             }
 
             // Procedural doodle: seeded arcs + diagonal, white/orange strokes.
+            // M5 low-power stub: skipped entirely when reduceEffects.
             Canvas {
                 id: doodle
                 anchors.fill: parent
                 opacity: 0.8
+                visible: !Ds.Theme.reduceEffects
                 onPaint: {
                     var ctx = getContext("2d");
                     var w = width, h = height;
