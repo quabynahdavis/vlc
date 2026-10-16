@@ -44,7 +44,7 @@ ApplicationWindow {
                     return SettingsStore.accentColor;
             } catch (e) {
             }
-            return "#D37918";
+            return Ds.Theme.accentSwatches[0];
         }
     }
     Binding {

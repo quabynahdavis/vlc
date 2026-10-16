@@ -482,7 +482,7 @@ Rectangle {
                                 spacing: 8
                                 Text {
                                     Layout.fillWidth: true
-                                    text: "#FF0000"
+                                    text: Ds.Theme.colorPreview.toString().toUpperCase()
                                     color: Ds.Theme.textSecondary
                                     font.pixelSize: 13
                                 }
@@ -521,7 +521,7 @@ Rectangle {
                                 spacing: 8
                                 Text {
                                     Layout.fillWidth: true
-                                    text: "#FF0000"
+                                    text: Ds.Theme.colorPreview.toString().toUpperCase()
                                     color: Ds.Theme.textSecondary
                                     font.pixelSize: 13
                                 }
