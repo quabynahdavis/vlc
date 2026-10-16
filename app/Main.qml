@@ -52,6 +52,20 @@ ApplicationWindow {
         property: "systemScheme"
         value: Application.styleHints.colorScheme
     }
+    // M5 low-power stub: Theme.reduceEffects follows
+    // SettingsStore.lowPowerMode so ThumbnailCard skips Canvas FX.
+    Binding {
+        target: Ds.Theme
+        property: "reduceEffects"
+        value: {
+            try {
+                if (typeof SettingsStore !== "undefined" && SettingsStore.lowPowerMode)
+                    return SettingsStore.lowPowerMode;
+            } catch (e) {
+            }
+            return false;
+        }
+    }
 
     // Set from main.cpp via setInitialProperties when a CLI arg is given.
     property url initialSource: ""
@@ -72,6 +86,10 @@ ApplicationWindow {
     // ticking live while "playing" so the transport stays live-bound.
     property int demoPosition: 130
     property int demoDuration: 1540
+    // M5 record badge clock: seconds since Record (R) was pressed; reset
+    // on every toggleRecord start. Badge shows red dot + REC + mm:ss.
+    property int recordSecs: 0
+    property bool recordBlink: true
 
     // NOTE (M2): strict `!==` between a url and "" is always true in QML
     // (no coercion), so compare the string form to keep the M1 empty-stage
@@ -92,6 +110,37 @@ ApplicationWindow {
         return (h < 10 ? "0" + h : h) + ":"
              + (m < 10 ? "0" + m : m) + ":"
              + (sec < 10 ? "0" + sec : sec);
+    }
+
+    function formatRecordTime(s) {
+        s = Math.max(0, Math.floor(s));
+        var m = Math.floor(s / 60);
+        var sec = s % 60;
+        return (m < 10 ? "0" + m : m) + ":" + (sec < 10 ? "0" + sec : sec);
+    }
+
+    // M5 user-feedback routing: toasts always fire; the modal ErrorDialog
+    // only opens when SettingsStore.showConfirmDialogs is ON (the mounted
+    // M3 toggle), otherwise errors stay as bottom-center toasts.
+    function confirmDialogsOn() {
+        try {
+            if (typeof SettingsStore !== "undefined")
+                return SettingsStore.showConfirmDialogs;
+        } catch (e) {
+        }
+        return false;
+    }
+
+    function showToast(message, kind) {
+        toastHost.show(message, kind);
+    }
+
+    function showError(title, message, details) {
+        toastHost.show(message, "error");
+        if (root.confirmDialogsOn())
+            errorDialog.showError(title, message, details);
+        else
+            console.log("M5 error (toast-only, confirm dialogs OFF):", title, "-", message);
     }
 
     function togglePlay() {
@@ -124,7 +173,14 @@ ApplicationWindow {
 
     function toggleRecord() {
         root.isRecording = !root.isRecording;
-        console.log("M1 record (stub), recording:", root.isRecording);
+        if (root.isRecording) {
+            root.recordSecs = 0;
+            root.recordBlink = true;
+            toastHost.show("Recording started — press R to stop", "info");
+        } else {
+            toastHost.show("Recording stopped (" + root.formatRecordTime(root.recordSecs) + ")", "success");
+        }
+        console.log("M5 record indicator, recording:", root.isRecording);
     }
 
     function toggleHideUI() {
@@ -133,6 +189,10 @@ ApplicationWindow {
     }
 
     function seekTo(seconds) {
+        // M5 4K SEEK NOTE: coarse-seek while dragging (keyframe clamp on
+        // release in the real libVLC engine) + next-frame stepping for fine
+        // adjust. No per-frame decode happens during drags, so 4K scrubbing
+        // stays under the 16ms frame budget; the demo path just clamps.
         if (root.hasMedia && player.seekable && player.duration > 0)
             player.setPosition(Math.max(0, Math.min(1, seconds * 1000 / player.duration)));
         else
@@ -151,7 +211,11 @@ ApplicationWindow {
         audioOutput: audioOut
         // M1: QtMultimedia preview wiring preserved from M0.
         source: root.initialSource
-        onErrorOccurred: (error, errorString) => console.log("M1 player:", errorString)
+        // M5: stage errors route to toast + (optional) ErrorDialog.
+        onErrorOccurred: (error, errorString) => {
+            console.log("M5 stage error:", errorString);
+            root.showError("Playback error", errorString || "Could not play this media.", "MediaPlayer error code: " + error);
+        }
         onPlaybackStateChanged: {
             if (root.hasMedia)
                 root.isPlaying = (playbackState === MediaPlayer.PlayingState);
@@ -168,6 +232,23 @@ ApplicationWindow {
         }
     }
 
+    // M5 record clock: ticks the REC badge while recording.
+    Timer {
+        id: recordTicker
+        interval: 1000
+        running: root.isRecording
+        repeat: true
+        onTriggered: root.recordSecs += 1
+    }
+
+    // M5 record dot blink (500ms) — cheap opacity flip, paused when idle.
+    Timer {
+        interval: 500
+        running: root.isRecording
+        repeat: true
+        onTriggered: root.recordBlink = !root.recordBlink
+    }
+
     // Wired shortcuts (menu shows the same hints; the rest are stubs).
     Shortcut { sequence: "Space"; onActivated: root.togglePlay() }
     Shortcut { sequence: "S"; onActivated: root.stopPlayback() }
@@ -180,9 +261,11 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+1"; onActivated: root.currentView = "player" }
     Shortcut { sequence: "Ctrl+2"; onActivated: root.currentView = "library" }
     // M3: settings (Ctrl+,), effects (Ctrl+E), subtitles (Ctrl+T) stubs.
+    // M5: Ctrl+O opens the network URL stub (mirrors Open Media menu).
     Shortcut { sequence: "Ctrl+,"; onActivated: settingsDialog.openPage("general") }
     Shortcut { sequence: "Ctrl+E"; onActivated: root.effectsOpen = !root.effectsOpen }
     Shortcut { sequence: "Ctrl+T"; onActivated: root.subtitlesOpen = !root.subtitlesOpen }
+    Shortcut { sequence: "Ctrl+O"; onActivated: networkDialog.openDialog() }
 
     // M2 create-playlist dialog, shared by rail/drawer in both views.
     CreatePlaylistDialog {
@@ -198,6 +281,15 @@ ApplicationWindow {
         function onPlaylistsChanged() { drawer.refresh(); }
         function onThumbnailReady(path, hint) {
             console.log("M2 thumbnail ready:", path, hint);
+        }
+        function onScanStarted(folder) {
+            toastHost.show("Scanning " + folder + "…", "info");
+        }
+        function onScanFinished(folder, count) {
+            toastHost.show("Scan finished: " + count + " files in " + folder, "success");
+        }
+        function onScanError(folder, message) {
+            root.showError("Library scan failed", message, "Folder: " + folder);
         }
     }
 
@@ -354,6 +446,38 @@ ApplicationWindow {
                     }
                 }
 
+                // M5 record indicator: red dot + REC + time, top-left of the
+                // stage while Record (R) is active. Dot blinks at 500ms.
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.topMargin: 12
+                    anchors.leftMargin: 12
+                    visible: root.isRecording
+                    width: recRow.implicitWidth + 24
+                    height: 32
+                    radius: Ds.Theme.radiusMedium
+                    color: Ds.Theme.recordChip
+                    RowLayout {
+                        id: recRow
+                        anchors.centerIn: parent
+                        spacing: 8
+                        Rectangle {
+                            Layout.preferredWidth: 10
+                            Layout.preferredHeight: 10
+                            radius: 5
+                            color: Ds.Theme.recordDot
+                            opacity: root.recordBlink ? 1.0 : 0.25
+                        }
+                        Text {
+                            text: "REC " + root.formatRecordTime(root.recordSecs)
+                            color: Ds.Theme.recordChipText
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                        }
+                    }
+                }
+
                 // Right-click context menu.
                 MouseArea {
                     anchors.fill: parent
@@ -371,6 +495,7 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     color: Ds.Theme.bgApp
                     LibraryView {
+                        id: libraryView
                         anchors.fill: parent
                         onOpenItem: (fileName) => {
                             console.log("M2 play from library (stub, engine lands in M1):", fileName);
@@ -380,6 +505,11 @@ ApplicationWindow {
                         }
                         onBackRequested: console.log("M2 library back (stub)")
                         onForwardRequested: console.log("M2 library forward (stub)")
+                        onAddRequested: {
+                            toastHost.show("Pick a folder to watch (stub: file picker lands later)", "info");
+                            console.log("M5 library addRequested (stub)");
+                        }
+                        onLoadFailed: (message) => root.showError("Library failed to load", message, "LibraryService.fixtureItems threw; see log.")
                     }
                 }
             }
@@ -461,6 +591,31 @@ ApplicationWindow {
         onNextRequested: root.nextItem()
         onRecordRequested: root.toggleRecord()
         onHideUIRequested: root.toggleHideUI()
+        onNetworkOpenRequested: networkDialog.openDialog()
         onQuitRequested: Qt.quit()
+    }
+
+    // M5 polish overlays: bottom-center toasts, modal error dialog with
+    // retry, and the Open Media > Network URL stub.
+    ToastHost {
+        id: toastHost
+        anchors.fill: parent
+        z: 50
+    }
+
+    ErrorDialog {
+        id: errorDialog
+        onRetryRequested: {
+            toastHost.show("Retrying last operation…", "info");
+            console.log("M5 error retry (stub)");
+        }
+    }
+
+    NetworkOpenDialog {
+        id: networkDialog
+        onOpenRequested: (url) => {
+            toastHost.show("Opening network stream (stub): " + url, "info");
+            console.log("M5 network open (stub, engine lands later):", url);
+        }
     }
 }
