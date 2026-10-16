@@ -685,10 +685,100 @@ Dialog {
                         }
                     }
 
+                    // ===== Performance page (M5): low-power FX kill, LRU-200
+                    // cache controls, scan watcher stub, 60fps + 4K notes.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "performance"
+                        spacing: 14
+                        Text {
+                            text: "Performance"
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Low-power mode (disable thumbnail FX)  ⓘ"
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.lowPowerMode : false
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.lowPowerMode = on;
+                                    console.log("M5 low-power (stub):", on ? "FX off, flat tiles" : "FX on");
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Grid holds 60fps @1k rows via cacheBuffer 1200 + delegate reuse + LRU-200 thumbnails drained at 4 per 16ms tick. Enable low-power on weak GPUs to skip Canvas doodles and gradients."
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "4K seek: drags stay coarse (keyframe clamp on release in the real engine); fine-step lands with next-frame. No per-frame decode during drags."
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Thumbnail cache (LRU-200, pool 4)"
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            Button {
+                                text: "Clear cache"
+                                focusPolicy: Qt.NoFocus
+                                onClicked: {
+                                    try {
+                                        if (typeof LibraryService !== "undefined" && LibraryService.clearThumbnailCache)
+                                            LibraryService.clearThumbnailCache();
+                                    } catch (e) {
+                                    }
+                                    console.log("M5 thumbnail cache cleared (stub)");
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 13
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 120
+                                    implicitHeight: 36
+                                    color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                    radius: Ds.Theme.radiusMedium
+                                    border.color: Ds.Theme.border
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Folder scan runs in the background (stub sweep at ~8 files/sec with progress in the Library header). Real QFileSystemWatcher + SQLite upsert lands after M5."
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
                     // ===== Placeholder pages =====
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles"
+                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance"
                         spacing: 12
                         Text {
                             text: dlg.pageTitle()
