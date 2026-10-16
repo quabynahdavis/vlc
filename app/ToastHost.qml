@@ -90,6 +90,8 @@ Item {
 
                     Text {
                         id: msgText
+                        Accessible.role: Accessible.AlertMessage
+                        Accessible.name: msg
                         Layout.fillWidth: true
                         text: msg
                         color: Ds.Theme.textPrimary
@@ -102,7 +104,7 @@ Item {
                     ToolButton {
                         text: "×"
                         font.pixelSize: 16
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.StrongFocus
                         onClicked: {
                             host.dismissed(msg);
                             toastModel.remove(index);
@@ -116,6 +118,8 @@ Item {
                         }
                         background: Rectangle {
                             color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                            border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                            border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                             radius: Ds.Theme.radiusSmall
                         }
                     }

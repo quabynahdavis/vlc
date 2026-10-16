@@ -29,7 +29,10 @@ Rectangle {
         ToolButton {
             Layout.fillWidth: true
             Layout.preferredHeight: 44
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: panel.expanded ? qsTr("Collapse %1").arg(panel.title) : panel.title
+            Accessible.description: qsTr("Toggle this effects section")
             onClicked: {
                 panel.expanded = !panel.expanded;
                 console.log("M3 effects panel (stub):", panel.title, panel.expanded ? "expanded" : "collapsed");
@@ -39,7 +42,7 @@ Rectangle {
                 spacing: 8
                 Text {
                     Layout.fillWidth: true
-                    text: panel.expanded ? "Collapse Settings" : panel.title
+                    text: panel.expanded ? qsTr("Collapse Settings") : panel.title
                     color: Ds.Theme.textSecondary
                     font.pixelSize: 17
                 }

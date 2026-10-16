@@ -43,7 +43,7 @@ Rectangle {
         id: rowMenu
         property string targetName: ""
         MenuItem {
-            text: "Rename (stub)"
+            text: qsTr("Rename (stub)")
             onTriggered: {
                 var to = rowMenu.targetName + " (renamed)";
                 try {
@@ -57,7 +57,7 @@ Rectangle {
             }
         }
         MenuItem {
-            text: "Delete (stub)"
+            text: qsTr("Delete (stub)")
             onTriggered: {
                 try {
                     if (typeof LibraryService !== "undefined" && LibraryService.deletePlaylist)
@@ -88,8 +88,10 @@ Rectangle {
             ToolButton {
                 text: "←"
                 font.pixelSize: 16
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Back"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Back")
+                ToolTip.text: qsTr("Back")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 drawer back (stub)")
                 contentItem: Text {
@@ -101,14 +103,18 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
             ToolButton {
                 text: "→"
                 font.pixelSize: 16
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Forward"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Forward")
+                ToolTip.text: qsTr("Forward")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 drawer forward (stub)")
                 contentItem: Text {
@@ -120,13 +126,15 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
             Text {
                 Layout.fillWidth: true
                 Layout.leftMargin: 4
-                text: "Playlists"
+                text: qsTr("Playlists")
                 color: Ds.Theme.textPrimary
                 font.pixelSize: 15
                 font.weight: Font.DemiBold
@@ -135,8 +143,10 @@ Rectangle {
             ToolButton {
                 text: "⋯"
                 font.pixelSize: 16
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "More options"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("More options")
+                ToolTip.text: qsTr("More options")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 drawer options (stub)")
                 contentItem: Text {
@@ -148,14 +158,18 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
             ToolButton {
                 text: "⧉"
                 font.pixelSize: 14
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Open in new window"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Open in new window")
+                ToolTip.text: qsTr("Open in new window")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 drawer pop-out (stub)")
                 contentItem: Text {
@@ -167,6 +181,8 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
@@ -187,8 +203,10 @@ Rectangle {
             ToolButton {
                 text: "↕"
                 font.pixelSize: 14
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Sort"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Sort")
+                ToolTip.text: qsTr("Sort")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 playlist sort (stub)")
                 contentItem: Text {
@@ -200,14 +218,18 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
             ToolButton {
                 text: "≡"
                 font.pixelSize: 14
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Filter"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Filter")
+                ToolTip.text: qsTr("Filter")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 playlist filter (stub)")
                 contentItem: Text {
@@ -219,14 +241,18 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
             ToolButton {
                 text: "⌕"
                 font.pixelSize: 14
-                focusPolicy: Qt.NoFocus
-                ToolTip.text: "Search playlists"
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Search playlists")
+                ToolTip.text: qsTr("Search playlists")
                 ToolTip.visible: hovered
                 onClicked: console.log("M1 playlist search (stub)")
                 contentItem: Text {
@@ -238,6 +264,8 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
@@ -261,7 +289,12 @@ Rectangle {
                 Layout.preferredHeight: 40
                 Rectangle {
                     anchors.fill: parent
-                    color: createHover.containsMouse ? Ds.Theme.bgHover : "transparent"
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Create playlist")
+                    color: (createHover.containsMouse || activeFocus) ? Ds.Theme.bgHover : "transparent"
+                    border.color: activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusMedium
                     RowLayout {
                         anchors.fill: parent
@@ -278,7 +311,7 @@ Rectangle {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Create playlist"
+                            text: qsTr("Create playlist")
                             color: Ds.Theme.textHint
                             font.pixelSize: 14
                             elide: Text.ElideRight

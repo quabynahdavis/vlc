@@ -18,7 +18,7 @@ ColumnLayout {
     property string searchText: ""
     property string sortMode: "episode-asc"
     property bool gridMode: true
-    property var crumbs: ["Videos", "Shows", "The Wand", "S01"]
+    property var crumbs: [qsTr("Videos"), qsTr("Shows"), qsTr("The Wand"), qsTr("S01")]
     // M5 states: loading while reloadTimer runs, loadError on service
     // failure (Retry re-runs reload). Empty-library is libraryModel == 0
     // with no error; search-empty is filtered == 0 with a non-empty lib.
@@ -38,10 +38,10 @@ ColumnLayout {
 
     function sortLabel() {
         if (lib.sortMode === "episode-desc")
-            return "Episode ↓";
+            return qsTr("Episode ↓");
         if (lib.sortMode === "name-asc")
-            return "Name ↑";
-        return "Episode ↑";
+            return qsTr("Name ↑");
+        return qsTr("Episode ↑");
     }
 
     function fixtureFallback() {
@@ -170,8 +170,11 @@ ColumnLayout {
         ToolButton {
             text: "←"
             font.pixelSize: 16
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Back"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Back")
+            Accessible.description: qsTr("Go back")
+            ToolTip.text: qsTr("Back")
             ToolTip.visible: hovered
             onClicked: { console.log("M2 library back (stub)"); lib.backRequested(); }
             contentItem: Text {
@@ -183,14 +186,19 @@ ColumnLayout {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: "→"
             font.pixelSize: 16
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Forward"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Forward")
+            Accessible.description: qsTr("Go forward")
+            ToolTip.text: qsTr("Forward")
             ToolTip.visible: hovered
             onClicked: { console.log("M2 library forward (stub)"); lib.forwardRequested(); }
             contentItem: Text {
@@ -202,6 +210,8 @@ ColumnLayout {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -225,7 +235,7 @@ ColumnLayout {
                     ToolButton {
                         text: modelData
                         font.pixelSize: 13
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.StrongFocus
                         onClicked: console.log("M2 breadcrumb (stub):", modelData)
                         contentItem: Text {
                             text: parent.text
@@ -237,6 +247,8 @@ ColumnLayout {
                         }
                         background: Rectangle {
                             color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                            border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                            border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                             radius: Ds.Theme.radiusSmall
                         }
                     }
@@ -258,8 +270,11 @@ ColumnLayout {
         ToolButton {
             text: "↕"
             font.pixelSize: 14
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Sort: " + lib.sortLabel()
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Sort: ") + lib.sortLabel()
+            Accessible.description: qsTr("Cycle the library sort order")
+                        ToolTip.text: qsTr("Sort: ") + lib.sortLabel()
             ToolTip.visible: hovered
             onClicked: lib.cycleSort()
             contentItem: Text {
@@ -271,14 +286,19 @@ ColumnLayout {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: lib.gridMode ? "▦" : "☰"
             font.pixelSize: 14
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: lib.gridMode ? "Grid view (click for list)" : "List view (click for grid)"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: lib.gridMode ? qsTr("Grid view") : qsTr("List view")
+            Accessible.description: qsTr("Toggle grid or list layout")
+                        ToolTip.text: lib.gridMode ? "Grid view (click for list)" : "List view (click for grid)"
             ToolTip.visible: hovered
             onClicked: {
                 lib.gridMode = !lib.gridMode;
@@ -293,15 +313,20 @@ ColumnLayout {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
 
         TextField {
             id: searchField
+            Accessible.role: Accessible.EditableText
+            Accessible.name: qsTr("Search library")
+            Accessible.description: qsTr("Filter the library grid")
             Layout.preferredWidth: 220
             Layout.preferredHeight: 34
-            placeholderText: "Search"
+            placeholderText: qsTr("Search")
             placeholderTextColor: Ds.Theme.textHint
             color: Ds.Theme.textPrimary
             font.pixelSize: 13
@@ -330,8 +355,11 @@ ColumnLayout {
         ToolButton {
             text: "⋯"
             font.pixelSize: 16
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "More options"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("More options")
+            Accessible.description: qsTr("Library options")
+            ToolTip.text: qsTr("More options")
             ToolTip.visible: hovered
             onClicked: console.log("M2 library overflow (stub)")
             contentItem: Text {
@@ -343,6 +371,8 @@ ColumnLayout {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -372,15 +402,15 @@ ColumnLayout {
             }
             Text {
                 Layout.fillWidth: true
-                text: "Scanning " + thumbWorker.scanFolder + "… " + Math.round(thumbWorker.scanProgressValue * 100) + "%"
+                text: qsTr("Scanning %1… %2%").arg(thumbWorker.scanFolder).arg(Math.round(thumbWorker.scanProgressValue * 100))
                 color: Ds.Theme.textSecondary
                 font.pixelSize: 12
                 elide: Text.ElideRight
             }
             ToolButton {
-                text: "Stop"
+                text: qsTr("Stop")
                 font.pixelSize: 12
-                focusPolicy: Qt.NoFocus
+                focusPolicy: Qt.StrongFocus
                 onClicked: thumbWorker.stopScan()
                 contentItem: Text {
                     text: parent.text
@@ -392,7 +422,8 @@ ColumnLayout {
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
                     radius: Ds.Theme.radiusSmall
-                    border.color: Ds.Theme.border
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 1
                 }
             }
         }
@@ -508,7 +539,7 @@ ColumnLayout {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: title + (progress > 0 ? " — watched" : "")
+                            text: title + (progress > 0 ? qsTr(" — watched") : "")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -537,7 +568,7 @@ ColumnLayout {
             }
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Loading library…"
+                text: qsTr("Loading library…")
                 color: Ds.Theme.textHint
                 font.pixelSize: 14
             }
@@ -566,7 +597,7 @@ ColumnLayout {
             }
             Text {
                 Layout.fillWidth: true
-                text: "Could not load the library"
+                text: qsTr("Could not load the library")
                 color: Ds.Theme.textPrimary
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
@@ -582,8 +613,8 @@ ColumnLayout {
             }
             Button {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Retry"
-                focusPolicy: Qt.NoFocus
+                text: qsTr("Retry")
+                focusPolicy: Qt.StrongFocus
                 onClicked: lib.retryLoad()
                 contentItem: Text {
                     text: parent.text
@@ -623,7 +654,7 @@ ColumnLayout {
             }
             Text {
                 Layout.fillWidth: true
-                text: "Library is empty"
+                text: qsTr("Library is empty")
                 color: Ds.Theme.textPrimary
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
@@ -631,7 +662,7 @@ ColumnLayout {
             }
             Text {
                 Layout.fillWidth: true
-                text: "Add a folder to start building your collection. The watcher indexes in the background."
+                text: qsTr("Add a folder to start building your collection. The watcher indexes in the background.")
                 color: Ds.Theme.textHint
                 font.pixelSize: 13
                 wrapMode: Text.WordWrap
@@ -641,8 +672,8 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 8
                 Button {
-                    text: "Add videos"
-                    focusPolicy: Qt.NoFocus
+                    text: qsTr("Add videos")
+                    focusPolicy: Qt.StrongFocus
                     onClicked: lib.addRequested()
                     contentItem: Text {
                         text: parent.text
@@ -659,8 +690,8 @@ ColumnLayout {
                     }
                 }
                 Button {
-                    text: "Rescan"
-                    focusPolicy: Qt.NoFocus
+                    text: qsTr("Rescan")
+                    focusPolicy: Qt.StrongFocus
                     onClicked: thumbWorker.startScan("/videos")
                     contentItem: Text {
                         text: parent.text
@@ -674,7 +705,8 @@ ColumnLayout {
                         implicitHeight: 38
                         color: parent.hovered ? Ds.Theme.bgHover : "transparent"
                         radius: Ds.Theme.radiusMedium
-                        border.color: Ds.Theme.border
+                        border.color: parent.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                        border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 1
                     }
                 }
             }
@@ -688,7 +720,7 @@ ColumnLayout {
             visible: !lib.isLoading && lib.loadError === "" && libraryModel.count > 0 && visibleModel.count === 0
             Text {
                 Layout.fillWidth: true
-                text: "No results for \"" + lib.searchText + "\""
+                text: qsTr("No results for \"%1\"").arg(lib.searchText)
                 color: Ds.Theme.textHint
                 font.pixelSize: 14
                 horizontalAlignment: Text.AlignHCenter
@@ -696,9 +728,9 @@ ColumnLayout {
             }
             ToolButton {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Clear search"
+                text: qsTr("Clear search")
                 font.pixelSize: 13
-                focusPolicy: Qt.NoFocus
+                focusPolicy: Qt.StrongFocus
                 onClicked: {
                     searchField.clear();
                     lib.searchText = "";
@@ -713,6 +745,8 @@ ColumnLayout {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }

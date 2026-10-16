@@ -11,7 +11,7 @@ Rectangle {
     color: Ds.Theme.bgApp
     implicitHeight: Ds.Theme.titleBarHeight
 
-    property string breadcrumb: "Videos"
+    property string breadcrumb: qsTr("Videos")
     property bool maximized: false
     property bool fullscreen: false
 
@@ -64,8 +64,11 @@ Rectangle {
         ToolButton {
             text: "⋯"
             font.pixelSize: 16
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "More"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("More options")
+            Accessible.description: qsTr("Title bar overflow menu")
+            ToolTip.text: qsTr("More")
             ToolTip.visible: hovered
             onClicked: console.log("M1 titlebar overflow (stub)")
             contentItem: Text {
@@ -77,14 +80,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: "⊞"
             font.pixelSize: 14
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Layout"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Layout")
+            Accessible.description: qsTr("Toggle the library layout")
+            ToolTip.text: qsTr("Layout")
             ToolTip.visible: hovered
             onClicked: console.log("M1 layout toggle (stub)")
             contentItem: Text {
@@ -96,6 +104,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -119,7 +129,7 @@ Rectangle {
         // Centered app title.
         Text {
             Layout.fillWidth: true
-            text: "VLC Media Player"
+            text: qsTr("VLC Media Player")
             color: Ds.Theme.textSecondary
             font.pixelSize: 13
             horizontalAlignment: Text.AlignHCenter
@@ -131,8 +141,11 @@ Rectangle {
         ToolButton {
             text: "–"
             font.pixelSize: 14
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Minimize"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Minimize")
+            Accessible.description: qsTr("Minimize the window")
+            ToolTip.text: qsTr("Minimize")
             ToolTip.visible: hovered
             onClicked: bar.minimizeClicked()
             contentItem: Text {
@@ -144,14 +157,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: bar.maximized ? "❐" : "▢"
             font.pixelSize: 12
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: bar.maximized ? "Restore" : "Maximize"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: bar.maximized ? qsTr("Restore") : qsTr("Maximize")
+            Accessible.description: qsTr("Toggle window maximize")
+                        ToolTip.text: bar.maximized ? "Restore" : "Maximize"
             ToolTip.visible: hovered
             onClicked: bar.maximizeClicked()
             contentItem: Text {
@@ -163,14 +181,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: "↗"
             font.pixelSize: 13
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Fullscreen"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Fullscreen")
+            Accessible.description: qsTr("Toggle fullscreen")
+            ToolTip.text: qsTr("Fullscreen")
             ToolTip.visible: hovered
             onClicked: bar.fullscreenClicked()
             contentItem: Text {
@@ -182,14 +205,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             text: "×"
             font.pixelSize: 16
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Close"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Close")
+            Accessible.description: qsTr("Close the window")
+            ToolTip.text: qsTr("Close")
             ToolTip.visible: hovered
             onClicked: bar.closeClicked()
             contentItem: Text {
@@ -201,6 +229,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }

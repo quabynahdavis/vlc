@@ -44,7 +44,7 @@ Rectangle {
 
         ToolButton {
             Layout.alignment: Qt.AlignHCenter
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
             onClicked: {
                 bank.open = !bank.open;
                 console.log("M3 equalizer bank (stub):", bank.open ? "open" : "closed");
@@ -52,7 +52,7 @@ Rectangle {
             contentItem: RowLayout {
                 spacing: 8
                 Text {
-                    text: bank.open ? "Close Equalizer" : "Open Equalizer"
+                    text: bank.open ? qsTr("Close Equalizer") : qsTr("Open Equalizer")
                     color: Ds.Theme.textSecondary
                     font.pixelSize: 15
                 }
@@ -90,7 +90,11 @@ Rectangle {
                         from: -20
                         to: 20
                         value: bank.bandValue(index)
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.StrongFocus
+                        // M6 a11y: each fader announces band + dB value.
+                        Accessible.role: Accessible.Slider
+                        Accessible.name: bank.bandName(index)
+                        Accessible.description: bank.formatDb(fader.value)
                         onMoved: {
                             try {
                                 if (typeof SettingsStore !== "undefined" && SettingsStore.setEqBand)
@@ -111,7 +115,8 @@ Rectangle {
                             height: fader.availableHeight
                             radius: 7
                             color: Ds.Theme.stage
-                            border.color: Ds.Theme.border
+                            border.color: fader.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                            border.width: fader.activeFocus ? Ds.Theme.focusRingWidth : 1
                             Rectangle {
                                 anchors.bottom: parent.bottom
                                 width: parent.width

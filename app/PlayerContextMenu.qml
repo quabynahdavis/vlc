@@ -41,14 +41,15 @@ Popup {
     }
 
     // Submenu model: stub entries until M3-M5 implement the panels.
+    // M6 i18n: labels wrapped at the model so translators see them.
     property var submenus: [
-        { icon: "▶", label: "Playback", kids: ["Speed +", "Speed −", "Normal speed"] },
-        { icon: "▣", label: "Video", kids: ["Fullscreen", "Aspect ratio"] },
-        { icon: "∿", label: "Audio", kids: ["Volume up", "Volume down", "Audio track"] },
-        { icon: "▤", label: "Subtitle", kids: ["Subtitle track", "Delay +", "Delay −"] },
-        { icon: "⚙", label: "More Settings", kids: ["Preferences", "Extended settings"] },
-        { icon: "☰", label: "Playlist", kids: ["New playlist", "Open playlist"] },
-        { icon: "▦", label: "Open Media", kids: ["Open file", "Open disc", "Open network"] }
+        { icon: "▶", label: qsTr("Playback"), kids: [qsTr("Speed +"), qsTr("Speed −"), qsTr("Normal speed")] },
+        { icon: "▣", label: qsTr("Video"), kids: [qsTr("Fullscreen"), qsTr("Aspect ratio")] },
+        { icon: "∿", label: qsTr("Audio"), kids: [qsTr("Volume up"), qsTr("Volume down"), qsTr("Audio track")] },
+        { icon: "▤", label: qsTr("Subtitle"), kids: [qsTr("Subtitle track"), qsTr("Delay +"), qsTr("Delay −")] },
+        { icon: "⚙", label: qsTr("More Settings"), kids: [qsTr("Preferences"), qsTr("Extended settings")] },
+        { icon: "☰", label: qsTr("Playlist"), kids: [qsTr("New playlist"), qsTr("Open playlist")] },
+        { icon: "▦", label: qsTr("Open Media"), kids: [qsTr("Open file"), qsTr("Open disc"), qsTr("Open network")] }
     ]
 
     function showAt(item, px, py) {
@@ -75,35 +76,35 @@ Popup {
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "▶"
-                label: menu.playing ? "Pause" : "Play"
+                label: menu.playing ? qsTr("Pause") : qsTr("Play")
                 hint: "Space"
                 onClicked: { menu.close(); menu.playRequested(); }
             }
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "■"
-                label: "Stop"
+                label: qsTr("Stop")
                 hint: "S"
                 onClicked: { menu.close(); menu.stopRequested(); }
             }
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "|◀"
-                label: "Previous Item"
+                label: qsTr("Previous Item")
                 hint: "P"
                 onClicked: { menu.close(); menu.prevRequested(); }
             }
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "▶|"
-                label: "Next Item"
+                label: qsTr("Next Item")
                 hint: "N"
                 onClicked: { menu.close(); menu.nextRequested(); }
             }
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "●"
-                label: menu.recording ? "Stop Recording" : "Record"
+                label: menu.recording ? qsTr("Stop Recording") : qsTr("Record")
                 hint: "R"
                 onClicked: { menu.close(); menu.recordRequested(); }
             }
@@ -121,7 +122,7 @@ Popup {
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "◫"
-                label: "Hide UI"
+                label: qsTr("Hide UI")
                 hint: "Ctrl + \\"
                 onClicked: { menu.close(); menu.hideUIRequested(); }
             }
@@ -163,7 +164,7 @@ Popup {
                             onClicked: {
                                 // M5: Open Media > Open network opens the
                                 // network URL stub; the rest stay stubs.
-                                if (label === "Open network") {
+                                if (label === qsTr("Open network")) {
                                     menu.close();
                                     menu.networkOpenRequested();
                                 } else {
@@ -188,7 +189,7 @@ Popup {
             MenuRow {
                 Layout.fillWidth: true
                 glyph: "⇥"
-                label: "Quit VLC"
+                label: qsTr("Quit VLC")
                 hint: "Ctrl + Q"
                 onClicked: { menu.close(); menu.quitRequested(); }
             }

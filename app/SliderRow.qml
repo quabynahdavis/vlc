@@ -43,7 +43,13 @@ ColumnLayout {
         from: row.from
         to: row.to
         value: row.value
-        focusPolicy: Qt.NoFocus
+        // M6 a11y: keyboard-adjustable with a visible 2px focus ring on the
+        // track; screen readers announce "label, value".
+        focusPolicy: Qt.StrongFocus
+        Accessible.role: Accessible.Slider
+        Accessible.name: row.label
+        Accessible.description: row.valueText
+        // Accessible.value is read live via valueText in the row header.
         onMoved: {
             row.moved(slider.value);
             if (row.key !== "" && typeof SettingsStore !== "undefined") {
@@ -65,7 +71,8 @@ ColumnLayout {
             height: implicitHeight
             radius: 13
             color: Ds.Theme.stage
-            border.color: Ds.Theme.border
+            border.color: slider.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+            border.width: slider.activeFocus ? Ds.Theme.focusRingWidth : 1
             Rectangle {
                 width: slider.visualPosition * parent.width
                 height: parent.height

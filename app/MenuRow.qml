@@ -3,11 +3,15 @@ import QtQuick.Layouts
 import "Ds" as Ds
 
 // M1 context-menu row: orange glyph, label, right-aligned hint/chevron.
+// M6 a11y: focusable row (Tab + Enter activates), focus ring, exposed as
+// Accessible.MenuItem with the hint appended for shortcut readout.
 Rectangle {
     id: row
-    color: hoverArea.containsMouse ? Ds.Theme.bgHover : "transparent"
+    color: hoverArea.containsMouse || row.activeFocus ? Ds.Theme.bgHover : "transparent"
     radius: Ds.Theme.radiusSmall
     implicitHeight: 38
+    border.color: row.activeFocus ? Ds.Theme.focusRing : "transparent"
+    border.width: row.activeFocus ? Ds.Theme.focusRingWidth : 0
 
     property string glyph: ""
     property string label: ""
@@ -15,6 +19,15 @@ Rectangle {
     property bool indent: false
 
     signal clicked
+
+    activeFocusOnTab: true
+    Accessible.role: Accessible.MenuItem
+    Accessible.name: row.hint !== "" ? row.label + ", " + row.hint : row.label
+    Accessible.description: row.label
+    Accessible.onPressAction: row.clicked()
+    Keys.onReturnPressed: row.clicked()
+    Keys.onEnterPressed: row.clicked()
+    Keys.onSpacePressed: row.clicked()
 
     RowLayout {
         anchors.fill: parent
@@ -50,6 +63,9 @@ Rectangle {
         id: hoverArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: row.clicked()
+        onClicked: {
+            row.forceActiveFocus();
+            row.clicked();
+        }
     }
 }

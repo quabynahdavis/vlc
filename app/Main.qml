@@ -18,8 +18,14 @@ ApplicationWindow {
     height: 720
     minimumWidth: 960
     minimumHeight: 600
-    title: "VLC Media Player"
+    title: qsTr("VLC Media Player")
     color: Ds.Theme.bgApp
+
+    // M6 i18n/RTL: mirror RowLayouts + anchors app-wide when the pseudo-RTL
+    // test language flips QGuiApplication::setLayoutDirection (main.cpp).
+    LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+    LayoutMirroring.childrenInherit: true
+    readonly property bool isRtl: Qt.application.layoutDirection === Qt.RightToLeft
 
     // M4 ThemeService wiring: requested mode/accent from SettingsStore,
     // system scheme from Application.styleHints (follows OS in System mode).
@@ -176,9 +182,9 @@ ApplicationWindow {
         if (root.isRecording) {
             root.recordSecs = 0;
             root.recordBlink = true;
-            toastHost.show("Recording started — press R to stop", "info");
+            toastHost.show(qsTr("Recording started — press R to stop"), "info");
         } else {
-            toastHost.show("Recording stopped (" + root.formatRecordTime(root.recordSecs) + ")", "success");
+            toastHost.show(qsTr("Recording stopped (%1)").arg(root.formatRecordTime(root.recordSecs)), "success");
         }
         console.log("M5 record indicator, recording:", root.isRecording);
     }
@@ -214,7 +220,7 @@ ApplicationWindow {
         // M5: stage errors route to toast + (optional) ErrorDialog.
         onErrorOccurred: (error, errorString) => {
             console.log("M5 stage error:", errorString);
-            root.showError("Playback error", errorString || "Could not play this media.", "MediaPlayer error code: " + error);
+            root.showError(qsTr("Playback error"), errorString || qsTr("Could not play this media."), qsTr("MediaPlayer error code: %1").arg(error));
         }
         onPlaybackStateChanged: {
             if (root.hasMedia)
@@ -250,6 +256,12 @@ ApplicationWindow {
     }
 
     // Wired shortcuts (menu shows the same hints; the rest are stubs).
+    // M6 keyboard audit (13/13 wired): Space play/pause, S stop, P prev,
+    // N next, R record, Ctrl+\ hide-UI, Ctrl+Q quit, Ctrl+, settings,
+    // Ctrl+E effects, Ctrl+T subtitles, Ctrl+O network-open, Ctrl+1 player,
+    // Ctrl+2 library. E/T stay Ctrl-modified on purpose: bare E/T would fire
+    // while typing in library search / URL / settings fields (WindowShortcut
+    // context), matching real VLC (Ctrl+E Adjustments). See README map.
     Shortcut { sequence: "Space"; onActivated: root.togglePlay() }
     Shortcut { sequence: "S"; onActivated: root.stopPlayback() }
     Shortcut { sequence: "P"; onActivated: root.prevItem() }
@@ -266,6 +278,8 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+E"; onActivated: root.effectsOpen = !root.effectsOpen }
     Shortcut { sequence: "Ctrl+T"; onActivated: root.subtitlesOpen = !root.subtitlesOpen }
     Shortcut { sequence: "Ctrl+O"; onActivated: networkDialog.openDialog() }
+    // M6: Escape leaves Hide-UI mode so keyboard users can always recover.
+    Shortcut { sequence: "Escape"; enabled: root.uiHidden; onActivated: root.toggleHideUI() }
 
     // M2 create-playlist dialog, shared by rail/drawer in both views.
     CreatePlaylistDialog {
@@ -283,13 +297,13 @@ ApplicationWindow {
             console.log("M2 thumbnail ready:", path, hint);
         }
         function onScanStarted(folder) {
-            toastHost.show("Scanning " + folder + "…", "info");
+            toastHost.show(qsTr("Scanning %1…").arg(folder), "info");
         }
         function onScanFinished(folder, count) {
-            toastHost.show("Scan finished: " + count + " files in " + folder, "success");
+            toastHost.show(qsTr("Scan finished: %1 files in %2").arg(count).arg(folder), "success");
         }
         function onScanError(folder, message) {
-            root.showError("Library scan failed", message, "Folder: " + folder);
+            root.showError(qsTr("Library scan failed"), message, qsTr("Folder: %1").arg(folder));
         }
     }
 
@@ -300,7 +314,7 @@ ApplicationWindow {
         TitleBar {
             Layout.fillWidth: true
             visible: !root.uiHidden
-            breadcrumb: root.currentView === "player" ? "Videos" : "Videos › Shows › The Wand › S01"
+            breadcrumb: root.currentView === "player" ? qsTr("Videos") : qsTr("Videos › Shows › The Wand › S01")
             maximized: root.visibility === Window.Maximized
             fullscreen: root.visibility === Window.FullScreen
             onMinimizeClicked: root.showMinimized()
@@ -368,6 +382,12 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     color: Ds.Theme.stageCanvas
+                    // M6 a11y: stage announces playback state.
+                    Accessible.role: Accessible.Pane
+                    Accessible.name: qsTr("Video stage")
+                    Accessible.description: root.hasMedia
+                        ? (root.isPlaying ? qsTr("Playing") : qsTr("Paused"))
+                        : qsTr("No video loaded")
 
                 VideoOutput {
                     id: videoOut
@@ -382,7 +402,7 @@ ApplicationWindow {
                     visible: !root.hasMedia
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: "No video — M1 player shell"
+                        text: qsTr("No video — M1 player shell")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 16
                     }
@@ -403,7 +423,10 @@ ApplicationWindow {
                     font.pixelSize: 22
                     width: 64
                     height: 64
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Play (Space)")
+                    Accessible.description: qsTr("Resume playback")
                     onClicked: root.togglePlay()
                 }
 
@@ -423,13 +446,16 @@ ApplicationWindow {
                         anchors.centerIn: parent
                         spacing: 12
                         Text {
-                            text: "UI hidden — press Ctrl + \\ to show"
+                            text: qsTr("UI hidden — press Ctrl + \\ to show")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 13
                         }
                         Button {
-                            text: "Show UI"
-                            focusPolicy: Qt.NoFocus
+                            text: qsTr("Show UI")
+                            focusPolicy: Qt.StrongFocus
+                            Accessible.role: Accessible.Button
+                            Accessible.name: qsTr("Show UI")
+                            Accessible.description: qsTr("Exit hidden-UI mode")
                             onClicked: root.toggleHideUI()
                             contentItem: Text {
                                 text: parent.text
@@ -441,6 +467,8 @@ ApplicationWindow {
                             background: Rectangle {
                                 color: parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent
                                 radius: Ds.Theme.radiusSmall
+                                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                             }
                         }
                     }
@@ -470,7 +498,7 @@ ApplicationWindow {
                             opacity: root.recordBlink ? 1.0 : 0.25
                         }
                         Text {
-                            text: "REC " + root.formatRecordTime(root.recordSecs)
+                            text: qsTr("REC %1").arg(root.formatRecordTime(root.recordSecs))
                             color: Ds.Theme.recordChipText
                             font.pixelSize: 13
                             font.weight: Font.DemiBold
@@ -506,10 +534,10 @@ ApplicationWindow {
                         onBackRequested: console.log("M2 library back (stub)")
                         onForwardRequested: console.log("M2 library forward (stub)")
                         onAddRequested: {
-                            toastHost.show("Pick a folder to watch (stub: file picker lands later)", "info");
+                            toastHost.show(qsTr("Pick a folder to watch (stub: file picker lands later)"), "info");
                             console.log("M5 library addRequested (stub)");
                         }
-                        onLoadFailed: (message) => root.showError("Library failed to load", message, "LibraryService.fixtureItems threw; see log.")
+                        onLoadFailed: (message) => root.showError(qsTr("Library failed to load"), message, qsTr("LibraryService.fixtureItems threw; see log."))
                     }
                 }
             }
@@ -606,7 +634,7 @@ ApplicationWindow {
     ErrorDialog {
         id: errorDialog
         onRetryRequested: {
-            toastHost.show("Retrying last operation…", "info");
+            toastHost.show(qsTr("Retrying last operation…"), "info");
             console.log("M5 error retry (stub)");
         }
     }
@@ -614,8 +642,19 @@ ApplicationWindow {
     NetworkOpenDialog {
         id: networkDialog
         onOpenRequested: (url) => {
-            toastHost.show("Opening network stream (stub): " + url, "info");
+            toastHost.show(qsTr("Opening network stream (stub): %1").arg(url), "info");
             console.log("M5 network open (stub, engine lands later):", url);
+        }
+    }
+
+    // M6: automatic update check stub at startup (honors the Startup toggle;
+    // SettingsStore.checkForUpdates logs "up to date" — feed lands later).
+    Component.onCompleted: {
+        try {
+            if (typeof SettingsStore !== "undefined" && SettingsStore.checkUpdates)
+                SettingsStore.checkForUpdates();
+        } catch (e) {
+            console.log("M6 update check failed:", e);
         }
     }
 }

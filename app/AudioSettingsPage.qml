@@ -16,7 +16,7 @@ ColumnLayout {
 
     Text {
         Layout.fillWidth: true
-        text: "Effects"
+        text: qsTr("Effects")
         color: Ds.Theme.textPrimary
         font.pixelSize: 20
         font.weight: Font.DemiBold
@@ -28,7 +28,7 @@ ColumnLayout {
         spacing: 8
         Text {
             Layout.fillWidth: true
-            text: "Equalizer"
+            text: qsTr("Equalizer")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -43,6 +43,7 @@ ColumnLayout {
         SettingToggle {
             id: eqToggle
             checked: page.storeAvailable() ? SettingsStore.eqEnabled : false
+            accessibleLabel: qsTr("Equalizer")
             onToggled: (on) => {
                 if (page.storeAvailable()) {
                     SettingsStore.eqEnabled = on;
@@ -59,7 +60,7 @@ ColumnLayout {
         spacing: 12
         Text {
             Layout.fillWidth: true
-            text: "Equalizer preset"
+            text: qsTr("Equalizer preset")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -70,9 +71,11 @@ ColumnLayout {
         }
         ComboBox {
             id: presetBox
+            Accessible.role: Accessible.ComboBox
+            Accessible.name: qsTr("Equalizer preset")
             Layout.preferredWidth: 320
             Layout.preferredHeight: Ds.Theme.inputHeight
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
             model: page.storeAvailable() ? SettingsStore.eqPresetOptions() : ["None"]
             currentIndex: {
                 var opts = page.storeAvailable() ? SettingsStore.eqPresetOptions() : ["None"];
@@ -133,7 +136,7 @@ ColumnLayout {
         spacing: 8
         Text {
             Layout.fillWidth: true
-            text: "Two-pass"
+            text: qsTr("Two-pass")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -147,6 +150,7 @@ ColumnLayout {
         }
         SettingToggle {
             checked: page.storeAvailable() ? SettingsStore.twoPass : false
+            accessibleLabel: qsTr("Two-pass")
             onToggled: (on) => {
                 if (page.storeAvailable())
                     SettingsStore.twoPass = on;
@@ -161,7 +165,7 @@ ColumnLayout {
         spacing: 8
         Text {
             Layout.fillWidth: true
-            text: "Spatial audio"
+            text: qsTr("Spatial audio")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -175,6 +179,7 @@ ColumnLayout {
         }
         SettingToggle {
             checked: page.storeAvailable() ? SettingsStore.spatialAudio : false
+            accessibleLabel: qsTr("Spatial audio")
             onToggled: (on) => {
                 if (page.storeAvailable()) {
                     SettingsStore.spatialAudio = on;
@@ -191,7 +196,7 @@ ColumnLayout {
         spacing: 12
         Text {
             Layout.fillWidth: true
-            text: "Spatial audio mode"
+            text: qsTr("Spatial audio mode")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -202,9 +207,11 @@ ColumnLayout {
         }
         ComboBox {
             id: spatialBox
+            Accessible.role: Accessible.ComboBox
+            Accessible.name: qsTr("Spatial audio mode")
             Layout.preferredWidth: 320
             Layout.preferredHeight: Ds.Theme.inputHeight
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
             model: page.storeAvailable() ? SettingsStore.spatialModeOptions()
                                          : ["Headphone virtualization"]
             currentIndex: {
@@ -264,7 +271,7 @@ ColumnLayout {
         spacing: 8
         Text {
             Layout.fillWidth: true
-            text: "Stereo widening"
+            text: qsTr("Stereo widening")
             color: Ds.Theme.textSecondary
             font.pixelSize: 15
         }
@@ -278,6 +285,7 @@ ColumnLayout {
         }
         SettingToggle {
             checked: page.storeAvailable() ? SettingsStore.stereoWidening : false
+            accessibleLabel: qsTr("Stereo widening")
             onToggled: (on) => {
                 if (page.storeAvailable())
                     SettingsStore.stereoWidening = on;

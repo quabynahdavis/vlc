@@ -12,7 +12,9 @@ Dialog {
     anchors.centerIn: parent
     width: 360
     modal: true
-    title: "Create playlist"
+    focus: true
+    title: qsTr("Create playlist")
+    closePolicy: Popup.CloseOnEscape
 
     signal created(string name)
 
@@ -29,20 +31,25 @@ Dialog {
             Layout.leftMargin: 16
             Layout.topMargin: 14
             Layout.bottomMargin: 6
-            text: "Create playlist"
+            text: qsTr("Create playlist")
             color: Ds.Theme.textPrimary
             font.pixelSize: 16
             font.weight: Font.DemiBold
         }
     }
 
+    // M6 a11y: dialog name/role live on the content Item (Dialog root is
+    // a Popup, not an Item, so Accessible cannot attach to it directly).
     contentItem: ColumnLayout {
         spacing: 8
+        Accessible.role: Accessible.Dialog
+        Accessible.name: qsTr("Create playlist")
+        Accessible.description: qsTr("Name a new playlist")
         Text {
             Layout.fillWidth: true
             Layout.leftMargin: 16
             Layout.rightMargin: 16
-            text: "Name"
+            text: qsTr("Name")
             color: Ds.Theme.textSecondary
             font.pixelSize: 13
         }
@@ -52,11 +59,13 @@ Dialog {
             Layout.leftMargin: 16
             Layout.rightMargin: 16
             Layout.preferredHeight: 40
-            placeholderText: "Playlist name"
+            placeholderText: qsTr("Playlist name")
             placeholderTextColor: Ds.Theme.textHint
             color: Ds.Theme.textPrimary
             font.pixelSize: 14
             maximumLength: 80
+            Accessible.role: Accessible.EditableText
+            Accessible.name: qsTr("Playlist name")
             onAccepted: createBtn.clicked()
             background: Rectangle {
                 color: Ds.Theme.bgElevated
@@ -69,7 +78,7 @@ Dialog {
             Layout.leftMargin: 16
             Layout.rightMargin: 16
             Layout.bottomMargin: 4
-            text: "Playlists live in the M2 SQLite store (stub)."
+            text: qsTr("Playlists live in the M2 SQLite store (stub).")
             color: Ds.Theme.textHint
             font.pixelSize: 12
             wrapMode: Text.WordWrap
@@ -82,8 +91,10 @@ Dialog {
             Layout.fillWidth: true
         }
         Button {
-            text: "Cancel"
-            focusPolicy: Qt.NoFocus
+            text: qsTr("Cancel")
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Cancel")
             onClicked: dlg.reject()
             contentItem: Text {
                 text: parent.text
@@ -97,13 +108,17 @@ Dialog {
                 implicitHeight: 36
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
                 radius: Ds.Theme.radiusMedium
-                border.color: Ds.Theme.border
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 1
             }
         }
         Button {
             id: createBtn
-            text: "Create"
-            focusPolicy: Qt.NoFocus
+            text: qsTr("Create")
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Create")
+            Accessible.description: qsTr("Create this playlist")
             enabled: nameField.text.trim() !== ""
             onClicked: dlg.accept()
             contentItem: Text {
@@ -120,6 +135,8 @@ Dialog {
                       : (parent.pressed ? Ds.Theme.accentPressed
                          : (parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent))
                 radius: Ds.Theme.radiusMedium
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
             }
         }
     }

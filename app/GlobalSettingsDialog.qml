@@ -16,17 +16,23 @@ Dialog {
     width: Math.min(Ds.Theme.settingsMaxWidth, parent.width - 64)
     height: Math.min(720, parent.height - 64)
     modal: true
+    focus: true
     title: ""
+    closePolicy: Popup.CloseOnEscape
 
     property string activePage: "general"
     property string searchText: ""
     property bool advancedOpen: false
+    property string bundleResult: ""
 
     function openPage(page) {
         dlg.activePage = page;
+        dlg.bundleResult = "";
         dlg.open();
         console.log("M3 settings open (stub):", page);
     }
+
+    onOpened: searchField.forceActiveFocus()
 
     function storeAvailable() {
         return typeof SettingsStore !== "undefined";
@@ -34,12 +40,12 @@ Dialog {
 
     function pageTitle() {
         if (dlg.activePage === "audio")
-            return "Audio Defaults";
+            return qsTr("Audio Defaults");
         if (dlg.activePage === "subtitles")
-            return "Subtitle Defaults";
+            return qsTr("Subtitle Defaults");
         if (dlg.activePage === "general")
-            return "Global Settings";
-        return dlg.activePage.charAt(0).toUpperCase() + dlg.activePage.slice(1) + " Settings";
+            return qsTr("Global Settings");
+        return dlg.activePage.charAt(0).toUpperCase() + dlg.activePage.slice(1) + qsTr(" Settings");
     }
 
     background: Rectangle {
@@ -48,8 +54,15 @@ Dialog {
         border.color: Ds.Theme.border
     }
 
+    // M6 a11y: dialog name/role live on the content Item (Dialog root is
+    // a Popup, not an Item, so Accessible cannot attach to it directly).
+    // Modal popups trap Tab focus while open; opening focuses the search
+    // field, Escape closes.
     contentItem: RowLayout {
         spacing: 0
+        Accessible.role: Accessible.Dialog
+        Accessible.name: dlg.pageTitle()
+        Accessible.description: qsTr("Global application settings")
 
         // ---- Left taxonomy (280px) ----
         Rectangle {
@@ -65,9 +78,11 @@ Dialog {
 
                 TextField {
                     id: searchField
+                    Accessible.role: Accessible.EditableText
+                    Accessible.name: qsTr("Search settings")
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
-                    placeholderText: "Search"
+                    placeholderText: qsTr("Search")
                     placeholderTextColor: Ds.Theme.textHint
                     color: Ds.Theme.textPrimary
                     font.pixelSize: 13
@@ -122,7 +137,10 @@ Dialog {
                         required property string page
                         required property string glyph
                         width: navList.width
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.role: Accessible.Button
+                        Accessible.name: label
+                        Accessible.description: "Open settings page"
                         visible: dlg.searchText.trim() === ""
                                  || label.toLowerCase().indexOf(dlg.searchText.trim().toLowerCase()) !== -1
                         height: visible ? 44 : 0
@@ -145,8 +163,10 @@ Dialog {
                             }
                         }
                         background: Rectangle {
-                            color: dlg.activePage === page ? Ds.Theme.bgElevated : "transparent"
+                            color: dlg.activePage === page ? Ds.Theme.bgElevated : (parent.activeFocus ? Ds.Theme.bgHover : "transparent")
                             radius: Ds.Theme.radiusMedium
+                            border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                            border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                         }
                     }
                 }
@@ -175,7 +195,7 @@ Dialog {
                 ToolButton {
                     text: "×"
                     font.pixelSize: 20
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onClicked: dlg.close()
                     contentItem: Text {
                         text: parent.text
@@ -186,6 +206,8 @@ Dialog {
                     }
                     background: Rectangle {
                         color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                        border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                        border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                         radius: Ds.Theme.radiusSmall
                     }
                 }
@@ -208,7 +230,7 @@ Dialog {
                         spacing: 18
 
                         Text {
-                            text: "Appearance"
+                            text: qsTr("Appearance")
                             color: Ds.Theme.textPrimary
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
@@ -219,15 +241,17 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Interface language"
+                                text: qsTr("Interface language")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             ComboBox {
                                 id: langBox
+                                Accessible.role: Accessible.ComboBox
+                                Accessible.name: qsTr("Interface language")
                                 Layout.preferredWidth: 320
                                 Layout.preferredHeight: Ds.Theme.inputHeight
-                                focusPolicy: Qt.NoFocus
+                                focusPolicy: Qt.StrongFocus
                                 model: dlg.storeAvailable() ? SettingsStore.languageOptions() : ["English"]
                                 currentIndex: {
                                     var opts = dlg.storeAvailable() ? SettingsStore.languageOptions() : ["English"];
@@ -276,12 +300,26 @@ Dialog {
                             }
                         }
 
+                        // M6 i18n: pseudo-RTL flips the whole window via
+                        // QGuiApplication layout direction (main.cpp) so row
+                        // mirroring can be checked with English strings.
+                        Text {
+                            Layout.fillWidth: true
+                            visible: dlg.storeAvailable() && SettingsStore.language === "Pseudo-RTL (test)"
+                            text: qsTr("Pseudo-RTL active — layout is mirrored (RTL check). Pick English to restore.")
+                            color: Ds.Theme.accent
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                            Accessible.role: Accessible.StaticText
+                            Accessible.name: "Pseudo-RTL active — layout is mirrored (RTL check). Pick English to restore."
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Theme"
+                                text: qsTr("Theme")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
@@ -295,7 +333,7 @@ Dialog {
                                         checkable: true
                                         checked: dlg.storeAvailable() ? SettingsStore.themeMode === modelData
                                                                       : modelData === "Dark"
-                                        focusPolicy: Qt.NoFocus
+                                        focusPolicy: Qt.StrongFocus
                                         onClicked: {
                                             if (dlg.storeAvailable())
                                                 SettingsStore.themeMode = modelData;
@@ -326,7 +364,7 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Accent color"
+                                text: qsTr("Accent color")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
@@ -366,7 +404,7 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Icon pack"
+                                text: qsTr("Icon pack")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
@@ -382,7 +420,7 @@ Dialog {
                                             var cur = dlg.storeAvailable() ? SettingsStore.iconPack : "Two-tone";
                                             return cur === modelData;
                                         }
-                                        focusPolicy: Qt.NoFocus
+                                        focusPolicy: Qt.StrongFocus
                                         onClicked: {
                                             if (dlg.storeAvailable())
                                                 SettingsStore.iconPack = modelData;
@@ -411,14 +449,14 @@ Dialog {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Lucide / Phosphor / Material fall back to Two-tone in M4 (full 3-pack bundling + attribution follow-up)."
+                            text: qsTr("Lucide / Phosphor / Material fall back to Two-tone in M4 (full 3-pack bundling + attribution follow-up).")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
 
                         Text {
-                            text: "Startup"
+                            text: qsTr("Startup")
                             color: Ds.Theme.textPrimary
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
@@ -429,13 +467,14 @@ Dialog {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "Show confirmation and error dialogs  ⓘ"
+                                text: qsTr("Show confirmation and error dialogs  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                                 wrapMode: Text.WordWrap
                             }
                             SettingToggle {
                                 checked: dlg.storeAvailable() ? SettingsStore.showConfirmDialogs : false
+                                accessibleLabel: "Show confirmation and error dialogs"
                                 onToggled: (on) => {
                                     if (dlg.storeAvailable())
                                         SettingsStore.showConfirmDialogs = on;
@@ -447,22 +486,66 @@ Dialog {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "Check for updates automatically  ⓘ"
+                                text: qsTr("Check for updates automatically  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                                 wrapMode: Text.WordWrap
                             }
                             SettingToggle {
                                 checked: dlg.storeAvailable() ? SettingsStore.checkUpdates : false
+                                accessibleLabel: "Check for updates automatically"
                                 onToggled: (on) => {
                                     if (dlg.storeAvailable())
                                         SettingsStore.checkUpdates = on;
                                 }
                             }
                         }
+                        // M6 auto-update stub: manual check honors the toggle
+                        // above; the stub feed always reports up-to-date.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: dlg.storeAvailable() && SettingsStore.updateAvailable
+                                      ? "Update available: " + SettingsStore.updateVersion
+                                      : "Up to date (stub feed)"
+                                color: Ds.Theme.textHint
+                                font.pixelSize: 12
+                                wrapMode: Text.WordWrap
+                            }
+                            Button {
+                                text: qsTr("Check now")
+                                focusPolicy: Qt.StrongFocus
+                                Accessible.role: Accessible.Button
+                                Accessible.name: "Check for updates now"
+                                Accessible.description: "Query the update feed (stub)"
+                                onClicked: {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.checkForUpdates();
+                                    console.log("M6 update check requested (stub)");
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 120
+                                    implicitHeight: 38
+                                    color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                    border.color: parent.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 1
+                                    radius: Ds.Theme.radiusMedium
+                                }
+                            }
+                        }
 
                         Text {
-                            text: "Diagnostics"
+                            text: qsTr("Diagnostics")
                             color: Ds.Theme.textPrimary
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
@@ -473,12 +556,13 @@ Dialog {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "Developer mode  ⓘ"
+                                text: qsTr("Developer mode  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             SettingToggle {
                                 checked: dlg.storeAvailable() ? SettingsStore.developerMode : false
+                                accessibleLabel: "Developer mode"
                                 onToggled: (on) => {
                                     if (dlg.storeAvailable())
                                         SettingsStore.developerMode = on;
@@ -490,12 +574,13 @@ Dialog {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "Save a log  ⓘ"
+                                text: qsTr("Save a log  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             SettingToggle {
                                 checked: dlg.storeAvailable() ? SettingsStore.saveLog : true
+                                accessibleLabel: "Save a log"
                                 onToggled: (on) => {
                                     if (dlg.storeAvailable())
                                         SettingsStore.saveLog = on;
@@ -507,12 +592,14 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Log file  ⓘ"
+                                text: qsTr("Log file  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             TextField {
                                 id: logField
+                                Accessible.role: Accessible.EditableText
+                                Accessible.name: qsTr("Log file path")
                                 Layout.preferredWidth: 220
                                 Layout.preferredHeight: Ds.Theme.inputHeight
                                 text: dlg.storeAvailable() ? SettingsStore.logFile : ""
@@ -531,8 +618,8 @@ Dialog {
                                 }
                             }
                             Button {
-                                text: "Browse"
-                                focusPolicy: Qt.NoFocus
+                                text: qsTr("Browse")
+                                focusPolicy: Qt.StrongFocus
                                 onClicked: {
                                     console.log("M3 log browse (stub: file picker lands later)");
                                     if (dlg.storeAvailable())
@@ -560,15 +647,17 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Log details  ⓘ"
+                                text: qsTr("Log details  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             ComboBox {
                                 id: logBox
+                                Accessible.role: Accessible.ComboBox
+                                Accessible.name: qsTr("Log details")
                                 Layout.preferredWidth: 340
                                 Layout.preferredHeight: Ds.Theme.inputHeight
-                                focusPolicy: Qt.NoFocus
+                                focusPolicy: Qt.StrongFocus
                                 model: dlg.storeAvailable() ? SettingsStore.logLevelOptions() : ["Errors only"]
                                 currentIndex: {
                                     var opts = dlg.storeAvailable() ? SettingsStore.logLevelOptions() : ["Errors only"];
@@ -617,10 +706,65 @@ Dialog {
                             }
                         }
 
+                        // M6 diagnostics: Errors-only is the default filter (file
+                        // keeps Critical/Fatal; Warnings/Info/Debug opt in via
+                        // the dropdown). The bundle exports log tail + settings.
+                        Text {
+                            Layout.fillWidth: true
+                            visible: !dlg.storeAvailable() || SettingsStore.logLevel === "Errors only"
+                            text: qsTr("Errors-only filter: the log file keeps errors; warnings and below stay console-only.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: dlg.bundleResult !== "" ? dlg.bundleResult : "Export a log bundle for bug reports."
+                                color: dlg.bundleResult !== "" ? Ds.Theme.success : Ds.Theme.textHint
+                                font.pixelSize: 12
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideRight
+                            }
+                            Button {
+                                text: qsTr("Export log bundle")
+                                focusPolicy: Qt.StrongFocus
+                                Accessible.role: Accessible.Button
+                                Accessible.name: "Export log bundle"
+                                Accessible.description: "Write diagnostics bundle (log tail plus settings)"
+                                onClicked: {
+                                    if (dlg.storeAvailable()) {
+                                        var p = SettingsStore.exportLogBundle("");
+                                        dlg.bundleResult = p !== "" ? "Bundle written: " + p : "Export failed — see console.";
+                                    } else {
+                                        dlg.bundleResult = "Settings store unavailable.";
+                                    }
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: Ds.Theme.accentOn
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 170
+                                    implicitHeight: 38
+                                    color: parent.pressed ? Ds.Theme.accentPressed : (parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent)
+                                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
+                                    radius: Ds.Theme.radiusMedium
+                                }
+                            }
+                        }
+
                         Button {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 48
-                            focusPolicy: Qt.NoFocus
+                            focusPolicy: Qt.StrongFocus
                             onClicked: {
                                 dlg.advancedOpen = !dlg.advancedOpen;
                                 console.log("M3 advanced options (stub):", dlg.advancedOpen ? "open" : "closed");
@@ -631,7 +775,7 @@ Dialog {
                                     Layout.fillWidth: true
                                 }
                                 Text {
-                                    text: "Advanced Options"
+                                    text: qsTr("Advanced Options")
                                     color: Ds.Theme.textSecondary
                                     font.pixelSize: 14
                                 }
@@ -652,7 +796,7 @@ Dialog {
                         Text {
                             Layout.fillWidth: true
                             visible: dlg.advancedOpen
-                            text: "Advanced preferences are gated here (stub: full VLC prefs land later)."
+                            text: qsTr("Advanced preferences are gated here (stub: full VLC prefs land later).")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
@@ -671,14 +815,14 @@ Dialog {
                         visible: dlg.activePage === "subtitles"
                         spacing: 12
                         Text {
-                            text: "Subtitles"
+                            text: qsTr("Subtitles")
                             color: Ds.Theme.textPrimary
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Subtitle defaults live in the Subtitles dock (transport ▤ button). Track 1 / English, delay -4.000 s, Inter #B8B8B8 on #0C0C0C."
+                            text: qsTr("Subtitle defaults live in the Subtitles dock (transport ▤ button). Track 1 / English, delay -4.000 s, Inter #B8B8B8 on #0C0C0C.")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 14
                             wrapMode: Text.WordWrap
@@ -692,7 +836,7 @@ Dialog {
                         visible: dlg.activePage === "performance"
                         spacing: 14
                         Text {
-                            text: "Performance"
+                            text: qsTr("Performance")
                             color: Ds.Theme.textPrimary
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
@@ -702,13 +846,14 @@ Dialog {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "Low-power mode (disable thumbnail FX)  ⓘ"
+                                text: qsTr("Low-power mode (disable thumbnail FX)  ⓘ")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                                 wrapMode: Text.WordWrap
                             }
                             SettingToggle {
                                 checked: dlg.storeAvailable() ? SettingsStore.lowPowerMode : false
+                                accessibleLabel: "Low-power mode (disable thumbnail FX)"
                                 onToggled: (on) => {
                                     if (dlg.storeAvailable())
                                         SettingsStore.lowPowerMode = on;
@@ -718,14 +863,14 @@ Dialog {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Grid holds 60fps @1k rows via cacheBuffer 1200 + delegate reuse + LRU-200 thumbnails drained at 4 per 16ms tick. Enable low-power on weak GPUs to skip Canvas doodles and gradients."
+                            text: qsTr("Grid holds 60fps @1k rows via cacheBuffer 1200 + delegate reuse + LRU-200 thumbnails drained at 4 per 16ms tick. Enable low-power on weak GPUs to skip Canvas doodles and gradients.")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "4K seek: drags stay coarse (keyframe clamp on release in the real engine); fine-step lands with next-frame. No per-frame decode during drags."
+                            text: qsTr("4K seek: drags stay coarse (keyframe clamp on release in the real engine); fine-step lands with next-frame. No per-frame decode during drags.")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
@@ -735,13 +880,13 @@ Dialog {
                             spacing: 12
                             Text {
                                 Layout.fillWidth: true
-                                text: "Thumbnail cache (LRU-200, pool 4)"
+                                text: qsTr("Thumbnail cache (LRU-200, pool 4)")
                                 color: Ds.Theme.textSecondary
                                 font.pixelSize: 14
                             }
                             Button {
-                                text: "Clear cache"
-                                focusPolicy: Qt.NoFocus
+                                text: qsTr("Clear cache")
+                                focusPolicy: Qt.StrongFocus
                                 onClicked: {
                                     try {
                                         if (typeof LibraryService !== "undefined" && LibraryService.clearThumbnailCache)
@@ -768,7 +913,49 @@ Dialog {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Folder scan runs in the background (stub sweep at ~8 files/sec with progress in the Library header). Real QFileSystemWatcher + SQLite upsert lands after M5."
+                            text: qsTr("Folder scan runs in the background (stub sweep at ~8 files/sec with progress in the Library header). Real QFileSystemWatcher + SQLite upsert lands after M5.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    // ===== Privacy page (M6): telemetry defaults OFF (opt-in).
+                    // Nothing phones home in M6 — the toggle only persists
+                    // the preference for the future network client.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "privacy"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Privacy")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Share anonymous usage statistics  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.telemetryEnabled : false
+                                accessibleLabel: "Share anonymous usage statistics"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.telemetryEnabled = on;
+                                    console.log("M6 privacy telemetry (stub, opt-in):", on);
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Off by default. M6 ships no network telemetry client — enabling only records your preference for a future release. Crash reports always ask first.")
                             color: Ds.Theme.textHint
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
@@ -778,7 +965,7 @@ Dialog {
                     // ===== Placeholder pages =====
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance"
+                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance" && dlg.activePage !== "privacy"
                         spacing: 12
                         Text {
                             text: dlg.pageTitle()
@@ -788,7 +975,7 @@ Dialog {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "This section keeps the M3 taxonomy complete (stub: full controls land after M3)."
+                            text: qsTr("This section keeps the M3 taxonomy complete (stub: full controls land after M3).")
                             color: Ds.Theme.textHint
                             font.pixelSize: 14
                             wrapMode: Text.WordWrap

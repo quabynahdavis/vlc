@@ -14,7 +14,9 @@ Dialog {
     anchors.centerIn: parent
     width: Math.min(480, parent.width - 64)
     modal: true
+    focus: true
     title: ""
+    closePolicy: Popup.CloseOnEscape
 
     property string errorTitle: "Playback error"
     property string errorMessage: "Something went wrong."
@@ -62,8 +64,13 @@ Dialog {
         }
     }
 
+    // M6 a11y: dialog name/role live on the content Item (Dialog root is
+    // a Popup, not an Item, so Accessible cannot attach to it directly).
     contentItem: ColumnLayout {
         spacing: 8
+        Accessible.role: Accessible.Dialog
+        Accessible.name: dlg.errorTitle
+        Accessible.description: dlg.errorMessage
         Text {
             Layout.fillWidth: true
             Layout.leftMargin: 16
@@ -78,7 +85,7 @@ Dialog {
             visible: dlg.errorDetails !== ""
             text: dlg.detailsOpen ? "Hide details ⌃" : "Show details ›"
             font.pixelSize: 13
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
             onClicked: dlg.detailsOpen = !dlg.detailsOpen
             contentItem: Text {
                 text: parent.text
@@ -87,6 +94,8 @@ Dialog {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -118,8 +127,11 @@ Dialog {
             Layout.fillWidth: true
         }
         Button {
-            text: "Dismiss"
-            focusPolicy: Qt.NoFocus
+            text: qsTr("Dismiss")
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Dismiss")
+            Accessible.description: qsTr("Close this error")
             onClicked: dlg.reject()
             contentItem: Text {
                 text: parent.text
@@ -133,12 +145,16 @@ Dialog {
                 implicitHeight: 36
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
                 radius: Ds.Theme.radiusMedium
-                border.color: Ds.Theme.border
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : Ds.Theme.border
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 1
             }
         }
         Button {
-            text: "Retry"
-            focusPolicy: Qt.NoFocus
+            text: qsTr("Retry")
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Retry")
+            Accessible.description: qsTr("Retry the failed operation")
             onClicked: {
                 dlg.accept();
                 dlg.retryRequested();
@@ -155,6 +171,8 @@ Dialog {
                 implicitHeight: 36
                 color: parent.pressed ? Ds.Theme.accentPressed : (parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent)
                 radius: Ds.Theme.radiusMedium
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
             }
         }
     }

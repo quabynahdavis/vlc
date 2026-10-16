@@ -50,8 +50,11 @@ Rectangle {
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Previous (P)"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Previous (P)")
+            Accessible.description: qsTr("Play the previous item")
+            ToolTip.text: qsTr("Previous (P)")
             ToolTip.visible: hovered
             onClicked: transport.prevClicked()
             contentItem: Icon {
@@ -61,6 +64,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -69,7 +74,10 @@ Rectangle {
         Button {
             Layout.preferredWidth: 52
             Layout.preferredHeight: 32
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: transport.playing ? qsTr("Pause (Space)") : qsTr("Play (Space)")
+            Accessible.description: qsTr("Toggle playback")
             ToolTip.text: transport.playing ? "Pause (Space)" : "Play (Space)"
             ToolTip.visible: hovered
             onClicked: transport.playClicked()
@@ -82,6 +90,8 @@ Rectangle {
                 color: parent.pressed ? Ds.Theme.accentPressed
                                       : (parent.hovered ? Ds.Theme.accentHover : Ds.Theme.accent)
                 radius: Ds.Theme.radiusMedium
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
             }
         }
 
@@ -89,8 +99,11 @@ Rectangle {
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Next (N)"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Next (N)")
+            Accessible.description: qsTr("Play the next item")
+            ToolTip.text: qsTr("Next (N)")
             ToolTip.visible: hovered
             onClicked: transport.nextClicked()
             contentItem: Icon {
@@ -100,6 +113,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -118,7 +133,11 @@ Rectangle {
             from: transport.from
             to: Math.max(transport.to, transport.from + 1)
             value: transport.value
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
+            // M6 a11y: scrubber announces position + duration; arrows step.
+            Accessible.role: Accessible.Slider
+            Accessible.name: qsTr("Seek")
+            Accessible.description: transport.elapsedText + " / " + transport.totalText
             ToolTip.text: transport.elapsedText + " / " + transport.totalText
             ToolTip.visible: hovered
             onMoved: transport.seekRequested(scrubber.value)
@@ -132,6 +151,8 @@ Rectangle {
                 height: implicitHeight
                 radius: 2
                 color: Ds.Theme.border
+                border.color: scrubber.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: scrubber.activeFocus ? Ds.Theme.focusRingWidth : 0
                 Rectangle {
                     width: scrubber.visualPosition * parent.width
                     height: parent.height
@@ -161,7 +182,10 @@ Rectangle {
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: transport.muted ? qsTr("Unmute") : qsTr("Mute")
+            Accessible.description: qsTr("Toggle audio mute")
             ToolTip.text: transport.muted ? "Unmute" : "Mute"
             ToolTip.visible: hovered
             onClicked: transport.muteToggled()
@@ -173,6 +197,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
@@ -181,8 +207,21 @@ Rectangle {
             id: wedge
             Layout.preferredWidth: 88
             Layout.preferredHeight: 20
+            // M6 a11y: wedge is a keyboard slider (Left/Right ±5%, Home/End).
+            activeFocusOnTab: true
+            Accessible.role: Accessible.Slider
+            Accessible.name: qsTr("Volume")
+            Accessible.description: Math.round(transport.volume * 100) + "%"
             ToolTip.text: Math.round(transport.volume * 100) + "%"
-            ToolTip.visible: wedgeHover.containsMouse
+            ToolTip.visible: wedgeHover.containsMouse || wedge.activeFocus
+            Keys.onLeftPressed: transport.volumeRequested(Math.max(0, transport.volume - 0.05))
+            Keys.onRightPressed: transport.volumeRequested(Math.min(1, transport.volume + 0.05))
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Home)
+                    transport.volumeRequested(0);
+                else if (event.key === Qt.Key_End)
+                    transport.volumeRequested(1);
+            }
 
             Canvas {
                 id: wedgeCanvas
@@ -246,8 +285,11 @@ Rectangle {
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Equalizer"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Equalizer (Ctrl+E)")
+            Accessible.description: qsTr("Open the effects dock")
+            ToolTip.text: qsTr("Equalizer")
             ToolTip.visible: hovered
             onClicked: transport.eqClicked()
             contentItem: Icon {
@@ -257,14 +299,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Subtitles"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Subtitles (Ctrl+T)")
+            Accessible.description: qsTr("Open the subtitles panel")
+            ToolTip.text: qsTr("Subtitles")
             ToolTip.visible: hovered
             onClicked: transport.subsClicked()
             contentItem: Icon {
@@ -274,14 +321,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Settings"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Settings (Ctrl+,)")
+            Accessible.description: qsTr("Open global settings")
+            ToolTip.text: qsTr("Settings")
             ToolTip.visible: hovered
             onClicked: transport.settingsClicked()
             contentItem: Icon {
@@ -291,14 +343,19 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }
         ToolButton {
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
-            focusPolicy: Qt.NoFocus
-            ToolTip.text: "Queue"
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Queue")
+            Accessible.description: qsTr("Open the play queue")
+            ToolTip.text: qsTr("Queue")
             ToolTip.visible: hovered
             onClicked: transport.queueClicked()
             contentItem: Icon {
@@ -308,6 +365,8 @@ Rectangle {
             }
             background: Rectangle {
                 color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                 radius: Ds.Theme.radiusSmall
             }
         }

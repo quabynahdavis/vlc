@@ -108,7 +108,7 @@ Rectangle {
             spacing: 8
             Text {
                 Layout.fillWidth: true
-                text: "Effects"
+                text: qsTr("Effects")
                 color: Ds.Theme.textPrimary
                 font.pixelSize: 18
                 font.weight: Font.DemiBold
@@ -116,7 +116,10 @@ Rectangle {
             ToolButton {
                 text: "×"
                 font.pixelSize: 20
-                focusPolicy: Qt.NoFocus
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Close effects")
+                Accessible.description: qsTr("Close the effects dock")
                 onClicked: {
                     dock.closeRequested();
                     console.log("M3 effects dock close (stub)");
@@ -130,6 +133,8 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
@@ -154,51 +159,51 @@ Rectangle {
                 spacing: 12
 
                 CollapsiblePanel {
-                    title: "Compressor"
+                    title: qsTr("Compressor")
                     SliderRow {
-                        label: "FM5 / Peak"
+                        label: qsTr("FM5 / Peak")
                         valueText: dock.compPeak.toFixed(1)
                         from: 0; to: 1; value: dock.compPeak
                         key: "effects/compressor/peak"
                         onMoved: (v) => dock.compPeak = v
                     }
                     SliderRow {
-                        label: "Attack"
+                        label: qsTr("Attack")
                         valueText: dock.compAttack.toFixed(1) + " ms"
                         from: 0; to: 100; value: dock.compAttack
                         key: "effects/compressor/attack"
                         onMoved: (v) => dock.compAttack = v
                     }
                     SliderRow {
-                        label: "Release"
+                        label: qsTr("Release")
                         valueText: dock.compRelease.toFixed(1) + " ms"
                         from: 0; to: 500; value: dock.compRelease
                         key: "effects/compressor/release"
                         onMoved: (v) => dock.compRelease = v
                     }
                     SliderRow {
-                        label: "Threshold"
+                        label: qsTr("Threshold")
                         valueText: dock.compThreshold.toFixed(1) + " dB"
                         from: -40; to: 0; value: dock.compThreshold
                         key: "effects/compressor/threshold"
                         onMoved: (v) => dock.compThreshold = v
                     }
                     SliderRow {
-                        label: "Ratio"
+                        label: qsTr("Ratio")
                         valueText: dock.compRatio.toFixed(1) + " : 1"
                         from: 1; to: 20; value: dock.compRatio
                         key: "effects/compressor/ratio"
                         onMoved: (v) => dock.compRatio = v
                     }
                     SliderRow {
-                        label: "Knee Radius"
+                        label: qsTr("Knee Radius")
                         valueText: dock.compKnee.toFixed(1) + " dB"
                         from: 0; to: 10; value: dock.compKnee
                         key: "effects/compressor/knee"
                         onMoved: (v) => dock.compKnee = v
                     }
                     SliderRow {
-                        label: "Makeup Gain"
+                        label: qsTr("Makeup Gain")
                         valueText: dock.compMakeup.toFixed(1) + " dB"
                         from: 0; to: 24; value: dock.compMakeup
                         key: "effects/compressor/makeup"
@@ -207,9 +212,9 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Equalizer"
+                    title: qsTr("Equalizer")
                     SliderRow {
-                        label: "Preamp"
+                        label: qsTr("Preamp")
                         valueText: Number(dock.loadKey("effects/eq/preamp", 12.0)).toFixed(1) + " dB"
                         from: -20; to: 20
                         value: dock.loadKey("effects/eq/preamp", 12.0)
@@ -217,37 +222,37 @@ Rectangle {
                         onMoved: (v) => console.log("M3 effects eq preamp (stub):", v.toFixed(1))
                     }
                     SliderRow {
-                        label: "60 Hz"
+                        label: qsTr("60 Hz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/60"
                     }
                     SliderRow {
-                        label: "170 Hz"
+                        label: qsTr("170 Hz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/170"
                     }
                     SliderRow {
-                        label: "310 Hz"
+                        label: qsTr("310 Hz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/310"
                     }
                     SliderRow {
-                        label: "600 Hz"
+                        label: qsTr("600 Hz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/600"
                     }
                     SliderRow {
-                        label: "1 KHz"
+                        label: qsTr("1 KHz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/1k"
                     }
                     SliderRow {
-                        label: "3 KHz"
+                        label: qsTr("3 KHz")
                         valueText: "0.0 dB"
                         from: -20; to: 20; value: 0
                         key: "effects/eq/3k"
@@ -255,9 +260,9 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Reverb"
+                    title: qsTr("Reverb")
                     SliderRow {
-                        label: "Size"
+                        label: qsTr("Size")
                         valueText: dock.revSize.toFixed(1)
                         from: 0; to: 10; value: dock.revSize
                         showTicks: true
@@ -265,7 +270,7 @@ Rectangle {
                         onMoved: (v) => dock.revSize = v
                     }
                     SliderRow {
-                        label: "Width"
+                        label: qsTr("Width")
                         valueText: dock.revWidth.toFixed(1)
                         from: 0; to: 10; value: dock.revWidth
                         showTicks: true
@@ -273,7 +278,7 @@ Rectangle {
                         onMoved: (v) => dock.revWidth = v
                     }
                     SliderRow {
-                        label: "Wet"
+                        label: qsTr("Wet")
                         valueText: dock.revWet.toFixed(1)
                         from: 0; to: 10; value: dock.revWet
                         showTicks: true
@@ -281,7 +286,7 @@ Rectangle {
                         onMoved: (v) => dock.revWet = v
                     }
                     SliderRow {
-                        label: "Dry"
+                        label: qsTr("Dry")
                         valueText: dock.revDry.toFixed(1)
                         from: 0; to: 10; value: dock.revDry
                         showTicks: true
@@ -289,7 +294,7 @@ Rectangle {
                         onMoved: (v) => dock.revDry = v
                     }
                     SliderRow {
-                        label: "Damp"
+                        label: qsTr("Damp")
                         valueText: dock.revDamp.toFixed(1)
                         from: 0; to: 10; value: dock.revDamp
                         showTicks: true
@@ -299,16 +304,16 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Delay"
+                    title: qsTr("Delay")
                     SliderRow {
-                        label: "Delay Time"
+                        label: qsTr("Delay Time")
                         valueText: dock.dlyTime.toFixed(1) + " ms"
                         from: 0; to: 100; value: dock.dlyTime
                         key: "effects/delay/time"
                         onMoved: (v) => dock.dlyTime = v
                     }
                     SliderRow {
-                        label: "Feedback Gain"
+                        label: qsTr("Feedback Gain")
                         valueText: dock.dlyFeedback.toFixed(1) + " %"
                         from: 0; to: 1; value: dock.dlyFeedback
                         showTicks: true
@@ -316,7 +321,7 @@ Rectangle {
                         onMoved: (v) => dock.dlyFeedback = v
                     }
                     SliderRow {
-                        label: "Crossfeed"
+                        label: qsTr("Crossfeed")
                         valueText: dock.dlyCrossfeed.toFixed(1) + " %"
                         from: 0; to: 1; value: dock.dlyCrossfeed
                         showTicks: true
@@ -324,7 +329,7 @@ Rectangle {
                         onMoved: (v) => dock.dlyCrossfeed = v
                     }
                     SliderRow {
-                        label: "Dry Mix"
+                        label: qsTr("Dry Mix")
                         valueText: dock.dlyDryMix.toFixed(1) + " %"
                         from: 0; to: 1; value: dock.dlyDryMix
                         showTicks: true
@@ -334,30 +339,30 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Video Adjust"
+                    title: qsTr("Video Adjust")
                     SliderRow {
-                        label: "Hue"
+                        label: qsTr("Hue")
                         valueText: Math.round(dock.vidHue).toString()
                         from: 0; to: 100; value: dock.vidHue
                         key: "effects/video/hue"
                         onMoved: (v) => dock.vidHue = v
                     }
                     SliderRow {
-                        label: "Brightness"
+                        label: qsTr("Brightness")
                         valueText: Math.round(dock.vidBrightness).toString()
                         from: 0; to: 100; value: dock.vidBrightness
                         key: "effects/video/brightness"
                         onMoved: (v) => dock.vidBrightness = v
                     }
                     SliderRow {
-                        label: "Contrast"
+                        label: qsTr("Contrast")
                         valueText: Math.round(dock.vidContrast).toString()
                         from: 0; to: 100; value: dock.vidContrast
                         key: "effects/video/contrast"
                         onMoved: (v) => dock.vidContrast = v
                     }
                     SliderRow {
-                        label: "Saturation"
+                        label: qsTr("Saturation")
                         valueText: Math.round(dock.vidSaturation).toString()
                         from: 0; to: 100; value: dock.vidSaturation
                         showTicks: true
@@ -365,7 +370,7 @@ Rectangle {
                         onMoved: (v) => dock.vidSaturation = v
                     }
                     SliderRow {
-                        label: "Gamma"
+                        label: qsTr("Gamma")
                         valueText: Math.round(dock.vidGamma).toString()
                         from: 0; to: 100; value: dock.vidGamma
                         showTicks: true
@@ -373,7 +378,7 @@ Rectangle {
                         onMoved: (v) => dock.vidGamma = v
                     }
                     SliderRow {
-                        label: "Sharpen Sigma"
+                        label: qsTr("Sharpen Sigma")
                         valueText: dock.vidSharpen.toFixed(1)
                         from: 0; to: 10; value: dock.vidSharpen
                         showTicks: true
@@ -381,7 +386,7 @@ Rectangle {
                         onMoved: (v) => dock.vidSharpen = v
                     }
                     SliderRow {
-                        label: "Banding Removal Radius"
+                        label: qsTr("Banding Removal Radius")
                         valueText: Math.round(dock.vidBanding).toString()
                         from: 0; to: 100; value: dock.vidBanding
                         showTicks: true
@@ -389,7 +394,7 @@ Rectangle {
                         onMoved: (v) => dock.vidBanding = v
                     }
                     SliderRow {
-                        label: "Film Grain Variance"
+                        label: qsTr("Film Grain Variance")
                         valueText: Math.round(dock.vidGrain).toString()
                         from: 0; to: 100; value: dock.vidGrain
                         showTicks: true
@@ -399,7 +404,7 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Crop"
+                    title: qsTr("Crop")
                     GridLayout {
                         Layout.fillWidth: true
                         columns: 2
@@ -407,10 +412,10 @@ Rectangle {
                         columnSpacing: 12
                         Repeater {
                             model: [
-                                { label: "Top", key: "top" },
-                                { label: "Bottom", key: "bottom" },
-                                { label: "Left", key: "left" },
-                                { label: "Right", key: "right" }
+                                { label: qsTr("Top"), key: "top" },
+                                { label: qsTr("Bottom"), key: "bottom" },
+                                { label: qsTr("Left"), key: "left" },
+                                { label: qsTr("Right"), key: "right" }
                             ]
                             delegate: Rectangle {
                                 required property var modelData
@@ -459,13 +464,13 @@ Rectangle {
                 }
 
                 CollapsiblePanel {
-                    title: "Video FX"
+                    title: qsTr("Video FX")
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
                         Text {
                             Layout.fillWidth: true
-                            text: "Color Extraction"
+                            text: qsTr("Color Extraction")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -504,7 +509,7 @@ Rectangle {
                         spacing: 8
                         Text {
                             Layout.fillWidth: true
-                            text: "Color Threshold"
+                            text: qsTr("Color Threshold")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -539,14 +544,14 @@ Rectangle {
                         }
                     }
                     SliderRow {
-                        label: "Saturation"
+                        label: qsTr("Saturation")
                         valueText: dock.fxSaturation.toFixed(0)
                         from: 0; to: 100; value: dock.fxSaturation
                         key: "effects/videofx/saturation"
                         onMoved: (v) => dock.fxSaturation = v
                     }
                     SliderRow {
-                        label: "Similarity"
+                        label: qsTr("Similarity")
                         valueText: dock.fxSimilarity.toFixed(0)
                         from: 0; to: 100; value: dock.fxSimilarity
                         key: "effects/videofx/similarity"
@@ -556,7 +561,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Text {
                             Layout.fillWidth: true
-                            text: "Negate Colors"
+                            text: qsTr("Negate Colors")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -568,7 +573,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Text {
                             Layout.fillWidth: true
-                            text: "Posterize"
+                            text: qsTr("Posterize")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -580,7 +585,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Text {
                             Layout.fillWidth: true
-                            text: "Gradient"
+                            text: qsTr("Gradient")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -591,7 +596,7 @@ Rectangle {
                     ComboBox {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Ds.Theme.inputHeight
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.StrongFocus
                         model: ["Gradient", "Edge", "Emboss"]
                         background: Rectangle {
                             color: Ds.Theme.stage
@@ -617,7 +622,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Text {
                             Layout.fillWidth: true
-                            text: "Color"
+                            text: qsTr("Color")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -629,7 +634,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Text {
                             Layout.fillWidth: true
-                            text: "Cartoon"
+                            text: qsTr("Cartoon")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 15
                         }
@@ -638,7 +643,7 @@ Rectangle {
                         }
                     }
                     SliderRow {
-                        label: "Sepia Intensity"
+                        label: qsTr("Sepia Intensity")
                         valueText: dock.fxSepia.toFixed(0)
                         from: 0; to: 100; value: dock.fxSepia
                         showTicks: true

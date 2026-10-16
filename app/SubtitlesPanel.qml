@@ -41,15 +41,18 @@ Rectangle {
             spacing: 4
             Repeater {
                 model: [
-                    { key: "playback", label: "Playback", glyph: "▶" },
-                    { key: "video", label: "Video", glyph: "▤" },
-                    { key: "audio", label: "Audio", glyph: "∿" },
-                    { key: "subtitles", label: "Subtitles", glyph: "▤" }
+                    { key: "playback", label: qsTr("Playback"), glyph: "▶" },
+                    { key: "video", label: qsTr("Video"), glyph: "▤" },
+                    { key: "audio", label: qsTr("Audio"), glyph: "∿" },
+                    { key: "subtitles", label: qsTr("Subtitles"), glyph: "▤" }
                 ]
                 delegate: ToolButton {
                     required property var modelData
                     Layout.fillWidth: true
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData.label
+                    Accessible.description: qsTr("Show panel tab")
                     onClicked: {
                         panel.activeTab = modelData.key;
                         console.log("M3 subtitles tab (stub):", modelData.key);
@@ -84,7 +87,10 @@ Rectangle {
             ToolButton {
                 text: "×"
                 font.pixelSize: 20
-                focusPolicy: Qt.NoFocus
+                focusPolicy: Qt.StrongFocus
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Close subtitles")
+                Accessible.description: qsTr("Close the subtitles panel")
                 onClicked: {
                     panel.closeRequested();
                     console.log("M3 subtitles panel close (stub)");
@@ -98,6 +104,8 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                    border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                    border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                     radius: Ds.Theme.radiusSmall
                 }
             }
@@ -123,7 +131,7 @@ Rectangle {
                 Text {
                     Layout.leftMargin: 20
                     Layout.topMargin: 16
-                    text: "Defaults"
+                    text: qsTr("Defaults")
                     color: Ds.Theme.textPrimary
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
@@ -136,7 +144,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Track"
+                        text: qsTr("Subtitle Track")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -173,7 +181,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Language"
+                        text: qsTr("Subtitle Language")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -208,7 +216,7 @@ Rectangle {
                 Text {
                     Layout.leftMargin: 20
                     Layout.topMargin: 16
-                    text: "Synchronization"
+                    text: qsTr("Synchronization")
                     color: Ds.Theme.textPrimary
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
@@ -221,7 +229,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Track Delay"
+                        text: qsTr("Subtitle Track Delay")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                         wrapMode: Text.WordWrap
@@ -242,13 +250,17 @@ Rectangle {
                 }
                 Slider {
                     id: delaySlider
+                    // M6 a11y: delay announces seconds; arrows step 0.1 s.
+                    Accessible.role: Accessible.Slider
+                    Accessible.name: qsTr("Subtitle track delay")
+                    Accessible.description: panel.fmtDelay(delaySlider.value)
                     Layout.fillWidth: true
                     Layout.leftMargin: 20
                     Layout.rightMargin: 20
                     from: -10
                     to: 10
                     value: panel.storeAvailable() ? SettingsStore.subDelay : -4.0
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onMoved: {
                         if (panel.storeAvailable()) {
                             SettingsStore.subDelay = delaySlider.value;
@@ -265,6 +277,8 @@ Rectangle {
                         height: implicitHeight
                         radius: 11
                         color: Ds.Theme.stage
+                        border.color: delaySlider.activeFocus ? Ds.Theme.focusRing : "transparent"
+                        border.width: delaySlider.activeFocus ? Ds.Theme.focusRingWidth : 0
                         Rectangle {
                             x: (0 - delaySlider.from) / (delaySlider.to - delaySlider.from) * parent.width
                             width: Math.abs(delaySlider.visualPosition * parent.width - x)
@@ -289,7 +303,7 @@ Rectangle {
                     Layout.rightMargin: 20
                     spacing: 8
                     Text {
-                        text: "-10 s"
+                        text: qsTr("-10 s")
                         color: Ds.Theme.textHint
                         font.pixelSize: 12
                     }
@@ -297,7 +311,7 @@ Rectangle {
                         Layout.fillWidth: true
                     }
                     Text {
-                        text: "0 s"
+                        text: qsTr("0 s")
                         color: Ds.Theme.textHint
                         font.pixelSize: 12
                     }
@@ -305,7 +319,7 @@ Rectangle {
                         Layout.fillWidth: true
                     }
                     Text {
-                        text: "+10 s"
+                        text: qsTr("+10 s")
                         color: Ds.Theme.textHint
                         font.pixelSize: 12
                     }
@@ -318,7 +332,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Speed"
+                        text: qsTr("Subtitle Speed")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -338,13 +352,16 @@ Rectangle {
                 }
                 Slider {
                     id: speedSlider
+                    Accessible.role: Accessible.Slider
+                    Accessible.name: qsTr("Subtitle speed")
+                    Accessible.description: speedSlider.value.toFixed(3) + " fps"
                     Layout.fillWidth: true
                     Layout.leftMargin: 20
                     Layout.rightMargin: 20
                     from: 0
                     to: 4
                     value: panel.storeAvailable() ? SettingsStore.subSpeed : 1.0
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onMoved: {
                         if (panel.storeAvailable())
                             SettingsStore.subSpeed = speedSlider.value;
@@ -359,6 +376,8 @@ Rectangle {
                         height: implicitHeight
                         radius: 11
                         color: Ds.Theme.stage
+                        border.color: speedSlider.activeFocus ? Ds.Theme.focusRing : "transparent"
+                        border.width: speedSlider.activeFocus ? Ds.Theme.focusRingWidth : 0
                     }
                     handle: Rectangle {
                         x: speedSlider.leftPadding + speedSlider.visualPosition * (speedSlider.availableWidth - width)
@@ -377,7 +396,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Duration Factor"
+                        text: qsTr("Subtitle Duration Factor")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                         wrapMode: Text.WordWrap
@@ -398,13 +417,16 @@ Rectangle {
                 }
                 Slider {
                     id: durSlider
+                    Accessible.role: Accessible.Slider
+                    Accessible.name: qsTr("Subtitle duration factor")
+                    Accessible.description: durSlider.value.toFixed(3)
                     Layout.fillWidth: true
                     Layout.leftMargin: 20
                     Layout.rightMargin: 20
                     from: 0
                     to: 5
                     value: panel.storeAvailable() ? SettingsStore.subDurationFactor : 0.0
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onMoved: {
                         if (panel.storeAvailable())
                             SettingsStore.subDurationFactor = durSlider.value;
@@ -419,6 +441,8 @@ Rectangle {
                         height: implicitHeight
                         radius: 11
                         color: Ds.Theme.stage
+                        border.color: durSlider.activeFocus ? Ds.Theme.focusRing : "transparent"
+                        border.width: durSlider.activeFocus ? Ds.Theme.focusRingWidth : 0
                     }
                     handle: Rectangle {
                         x: durSlider.leftPadding + durSlider.visualPosition * (durSlider.availableWidth - width)
@@ -441,7 +465,7 @@ Rectangle {
                 Text {
                     Layout.leftMargin: 20
                     Layout.topMargin: 16
-                    text: "Appearance"
+                    text: qsTr("Appearance")
                     color: Ds.Theme.textPrimary
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
@@ -454,7 +478,7 @@ Rectangle {
                     spacing: 8
                     Text {
                         Layout.fillWidth: true
-                        text: "Embedded Sub Format"
+                        text: qsTr("Embedded Sub Format")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                         wrapMode: Text.WordWrap
@@ -476,7 +500,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Subtitle Font"
+                        text: qsTr("Subtitle Font")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -506,7 +530,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Text Color"
+                        text: qsTr("Text Color")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -549,7 +573,7 @@ Rectangle {
                     spacing: 12
                     Text {
                         Layout.fillWidth: true
-                        text: "Outline Color"
+                        text: qsTr("Outline Color")
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
@@ -598,7 +622,7 @@ Rectangle {
                     Layout.rightMargin: 20
                     Layout.topMargin: 12
                     Layout.preferredHeight: 48
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onClicked: {
                         panel.presetOpen = !panel.presetOpen;
                         console.log("M3 subtitles preset (stub):", panel.presetOpen ? "open" : "closed");
@@ -608,7 +632,7 @@ Rectangle {
                         Text {
                             Layout.fillWidth: true
                             Layout.leftMargin: 12
-                            text: "Default Preset"
+                            text: qsTr("Default Preset")
                             color: Ds.Theme.textSecondary
                             font.pixelSize: 14
                         }
@@ -629,7 +653,7 @@ Rectangle {
                     Layout.leftMargin: 20
                     Layout.rightMargin: 20
                     visible: panel.presetOpen
-                    text: "Preset details are gated here (stub)."
+                    text: qsTr("Preset details are gated here (stub).")
                     color: Ds.Theme.textHint
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
@@ -639,7 +663,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: 12
                     Layout.bottomMargin: 20
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
                     onClicked: console.log("M3 open advanced settings (stub)")
                     contentItem: RowLayout {
                         spacing: 8
@@ -649,7 +673,7 @@ Rectangle {
                             font.pixelSize: 16
                         }
                         Text {
-                            text: "Open Advanced Settings"
+                            text: qsTr("Open Advanced Settings")
                             color: Ds.Theme.textHint
                             font.pixelSize: 14
                         }

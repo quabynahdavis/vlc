@@ -25,12 +25,12 @@ Rectangle {
 
         Repeater {
             model: [
-                { nav: "home", icon: "home", tip: "Home" },
-                { nav: "files", icon: "files", tip: "Files" },
-                { nav: "music", icon: "music", tip: "Music" },
-                { nav: "radio", icon: "radio", tip: "Radio" },
-                { nav: "playlist", icon: "playlist", tip: "Playlists" },
-                { nav: "history", icon: "history", tip: "History" }
+                { nav: "home", icon: "home", tip: qsTr("Home") },
+                { nav: "files", icon: "files", tip: qsTr("Files") },
+                { nav: "music", icon: "music", tip: qsTr("Music") },
+                { nav: "radio", icon: "radio", tip: qsTr("Radio") },
+                { nav: "playlist", icon: "playlist", tip: qsTr("Playlists") },
+                { nav: "history", icon: "history", tip: qsTr("History") }
             ]
             delegate: Item {
                 id: cell
@@ -51,7 +51,10 @@ Rectangle {
                 ToolButton {
                     anchors.fill: parent
                     anchors.leftMargin: 3
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.StrongFocus
+                    Accessible.role: Accessible.Button
+                    Accessible.name: cell.modelData.tip
+                    Accessible.description: qsTr("Show %1").arg(cell.modelData.tip)
                     ToolTip.text: cell.modelData.tip
                     ToolTip.visible: hovered
                     onClicked: rail.navSelected(cell.modelData.nav)
@@ -63,6 +66,8 @@ Rectangle {
                     }
                     background: Rectangle {
                         color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+                        border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+                        border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
                         radius: Ds.Theme.radiusMedium
                     }
                 }
@@ -76,8 +81,11 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 40
         height: 40
-        focusPolicy: Qt.NoFocus
-        ToolTip.text: "Add"
+        focusPolicy: Qt.StrongFocus
+        Accessible.role: Accessible.Button
+        Accessible.name: qsTr("Add")
+        Accessible.description: qsTr("Create a playlist or add media")
+        ToolTip.text: qsTr("Add")
         ToolTip.visible: hovered
         onClicked: rail.navSelected("add")
         contentItem: Icon {
@@ -87,6 +95,8 @@ Rectangle {
         }
         background: Rectangle {
             color: parent.hovered ? Ds.Theme.bgHover : "transparent"
+            border.color: parent.activeFocus ? Ds.Theme.focusRing : "transparent"
+            border.width: parent.activeFocus ? Ds.Theme.focusRingWidth : 0
             radius: Ds.Theme.radiusMedium
         }
     }

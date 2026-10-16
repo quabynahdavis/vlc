@@ -23,6 +23,18 @@ Item {
     signal clicked
     signal playRequested
 
+    // M6 a11y: card is Tab-focusable (Enter selects, Space plays), announced
+    // as "fileName, episode E01, watched NN%" with a 2px focus ring.
+    activeFocusOnTab: true
+    Accessible.role: Accessible.ListItem
+    Accessible.name: card.fileName
+    Accessible.description: qsTr("Episode %1").arg(card.epTag())
+        + (card.progress > 0 ? qsTr(", watched %1%").arg(Math.round(card.progress * 100)) : "")
+    Accessible.onPressAction: card.playRequested()
+    Keys.onReturnPressed: card.playRequested()
+    Keys.onEnterPressed: card.playRequested()
+    Keys.onSpacePressed: card.playRequested()
+
     function tint(i) {
         var palette = Ds.Theme.artPalette;
         var k = ((i % palette.length) + palette.length) % palette.length;
@@ -50,8 +62,8 @@ Item {
             radius: Ds.Theme.radiusLarge
             clip: true
             color: Ds.Theme.stage
-            border.color: hoverArea.containsMouse ? Ds.Theme.accent : Ds.Theme.border
-            border.width: hoverArea.containsMouse ? 2 : 1
+            border.color: (hoverArea.containsMouse || card.activeFocus) ? Ds.Theme.accent : Ds.Theme.border
+            border.width: card.activeFocus ? Ds.Theme.focusRingWidth : (hoverArea.containsMouse ? 2 : 1)
 
             // Gradient wash keyed off the episode seed.
             // M5 low-power stub: hidden when reduceEffects (flat tile).
@@ -152,7 +164,10 @@ Item {
                 id: hoverArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: card.clicked()
+                onClicked: {
+                    card.forceActiveFocus();
+                    card.clicked();
+                }
                 onDoubleClicked: card.playRequested()
             }
         }
