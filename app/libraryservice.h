@@ -41,6 +41,11 @@ public:
     Q_INVOKABLE bool renamePlaylist(const QString &oldName, const QString &newName);
     Q_INVOKABLE bool deletePlaylist(const QString &name);
 
+    // M8 queue: ordered items of a playlist, and save a queue as a playlist.
+    // Items are maps with path / title / fileName / duration (see QueueView).
+    Q_INVOKABLE QVariantList playlistItems(const QString &name);
+    Q_INVOKABLE bool savePlaylistItems(const QString &name, const QVariantList &items);
+
     // Thumbnail worker: LRU-200 hint cache, async via thumbnailReady().
     Q_INVOKABLE void requestThumbnail(const QString &path);
     Q_INVOKABLE int thumbnailCacheSize() const;
