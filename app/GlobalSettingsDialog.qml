@@ -53,6 +53,25 @@ Dialog {
         return str + "x";
     }
 
+    function pageIndex(p) {
+        switch (p) {
+        case "general": return 0;
+        case "audio": return 1;
+        case "subtitles": return 2;
+        case "performance": return 3;
+        case "privacy": return 4;
+        case "interface": return 5;
+        case "playback": return 6;
+        case "video": return 7;
+        case "controls": return 8;
+        case "network": return 9;
+        case "recording": return 10;
+        case "extensions": return 11;
+        case "library": return 12;
+        default: return 0;
+        }
+    }
+
     function pageTitle() {
         if (dlg.activePage === "audio")
             return qsTr("Audio Defaults");
@@ -234,9 +253,11 @@ Dialog {
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                ColumnLayout {
+                StackLayout {
+                    id: settingsStack
                     width: parent.width
                     spacing: 20
+                    currentIndex: dlg.pageIndex(dlg.activePage)
 
                     // ===== General page =====
                     ColumnLayout {

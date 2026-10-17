@@ -124,7 +124,8 @@ Rectangle {
 
         ScrollView {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.fillHeight: panel.activeTab === "subtitles"
+            visible: panel.activeTab === "subtitles"
             clip: true
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -901,6 +902,19 @@ Rectangle {
                     }
                 }
             }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 24
+            Layout.leftMargin: 20
+            Layout.rightMargin: 20
+            visible: panel.activeTab !== "subtitles"
+            text: qsTr("Switch to Settings > " + (panel.activeTab === "playback" ? "Playback" : panel.activeTab === "video" ? "Video" : "Audio"))
+            color: Ds.Theme.textSecondary
+            font.pixelSize: 14
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 }
