@@ -247,6 +247,92 @@ bool LibraryService::deletePlaylist(const QString &name)
     return true;
 }
 
+QVariantList LibraryService::playlistItems(const QString &name)
+{
+    QVariantList out;
+    if (name.trimmed().isEmpty() || !m_ready)
+        return out;
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("vlc-library"));
+    QSqlQuery q(db);
+    q.prepare(QStringLiteral(
+        "SELECT m.path, m.title, m.fileName, m.duration "
+        "FROM playlist_items pi JOIN media m ON m.id = pi.media_id "
+        "WHERE pi.playlist_id = (SELECT id FROM playlists WHERE name=:name) "
+        "ORDER BY pi.position"));
+    q.bindValue(QStringLiteral(":name"), name.trimmed());
+    if (q.exec()) {
+        while (q.next()) {
+            QVariantMap m;
+            m.insert(QStringLiteral("path"), q.value(0).toString());
+            m.insert(QStringLiteral("title"), q.value(1).toString());
+            m.insert(QStringLiteral("fileName"), q.value(2).toString());
+            m.insert(QStringLiteral("duration"), q.value(3).toInt());
+            out.append(m);
+        }
+    } else {
+        qWarning() << "M8 LibraryService: playlistItems failed:"
+                   << q.lastError().text();
+    }
+    return out;
+}
+
+bool LibraryService::savePlaylistItems(const QString &name, const QVariantList &items)
+{
+    const QString trimmed = name.trimmed();
+    if (trimmed.isEmpty())
+        return false;
+    if (!m_ready)
+        return true;
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("vlc-library"));
+    // Ensure playlist exists.
+    QSqlQuery ins(db);
+    ins.prepare(QStringLiteral("INSERT OR IGNORE INTO playlists (name) VALUES (:name)"));
+    ins.bindValue(QStringLiteral(":name"), trimmed);
+    ins.exec();
+    QSqlQuery pid(db);
+    pid.prepare(QStringLiteral("SELECT id FROM playlists WHERE name=:name"));
+    pid.bindValue(QStringLiteral(":name"), trimmed);
+    if (!pid.exec() || !pid.next())
+        return false;
+    const int playlistId = pid.value(0).toInt();
+    // Clear existing items.
+    QSqlQuery del(db);
+    del.prepare(QStringLiteral("DELETE FROM playlist_items WHERE playlist_id=:id"));
+    del.bindValue(QStringLiteral(":id"), playlistId);
+    del.exec();
+    for (int i = 0; i < items.size(); ++i) {
+        const QVariantMap m = items.at(i).toMap();
+        const QString path = m.value(QStringLiteral("path")).toString();
+        if (path.isEmpty())
+            continue;
+        // Upsert media row.
+        QSqlQuery media(db);
+        media.prepare(QStringLiteral(
+            "INSERT OR IGNORE INTO media (path, title, duration) VALUES (:path, :title, :dur)"));
+        media.bindValue(QStringLiteral(":path"), path);
+        media.bindValue(QStringLiteral(":title"), m.value(QStringLiteral("title"), m.value(QStringLiteral("fileName"))));
+        media.bindValue(QStringLiteral(":dur"), m.value(QStringLiteral("duration"), 0));
+        media.exec();
+        QSqlQuery mid(db);
+        mid.prepare(QStringLiteral("SELECT id FROM media WHERE path=:path"));
+        mid.bindValue(QStringLiteral(":path"), path);
+        if (!mid.exec() || !mid.next())
+            continue;
+        const int mediaId = mid.value(0).toInt();
+        QSqlQuery add(db);
+        add.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO playlist_items (playlist_id, media_id, position) "
+            "VALUES (:pid, :mid, :pos)"));
+        add.bindValue(QStringLiteral(":pid"), playlistId);
+        add.bindValue(QStringLiteral(":mid"), mediaId);
+        add.bindValue(QStringLiteral(":pos"), i);
+        add.exec();
+    }
+    qInfo() << "M8 LibraryService: saved" << items.size() << "items to" << trimmed;
+    emit playlistsChanged();
+    return true;
+}
+
 void LibraryService::requestThumbnail(const QString &path)
 {
     // M5 LRU-200: cache hits emit on the next loop (still async, no C++

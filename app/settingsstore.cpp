@@ -7,7 +7,7 @@
 
 namespace {
 
-const int kSchemaVersion = 7;
+const int kSchemaVersion = 8;
 
 QVariantList defaultEqBands()
 {
@@ -1074,6 +1074,11 @@ void SettingsStore::migrateIfNeeded()
             s.setValue(QStringLiteral("m7/miniPlayer/size/x"), -1);
         if (!s.contains(QStringLiteral("m7/miniPlayer/size/y")))
             s.setValue(QStringLiteral("m7/miniPlayer/size/y"), -1);
+    } else if (stored == 7) {
+        qInfo() << "M8 SettingsStore: migrating schema 7 -> 8"
+                << "(add appearance/titleBar=Custom, keep M3..M7 keys)";
+        if (!s.contains(QStringLiteral("m8/appearance/titleBar")))
+            s.setValue(QStringLiteral("m8/appearance/titleBar"), QStringLiteral("Custom"));
     } else if (stored != 3) {
         qInfo() << "M3 SettingsStore: migrating schema" << stored << "->" << kSchemaVersion
                 << "(stub: namespaced keys, no legacy import)";

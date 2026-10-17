@@ -21,8 +21,8 @@
 // loop / resume, video renderer / HDR / deinterlace / aspect, network cache /
 // proxy, performance threads, recording path / format, privacy watch-history)
 // and adds appearance.titleBar (Custom | System, default Custom). New keys
-// live under the m8/ namespace; schemaVersion stays 7 so the M7 mini-player
-// schema remains intact (fresh keys read back at their defaults).
+// live under the m8/ namespace; schemaVersion bumps to 8 to migrate the new
+// appearance.titleBar key (default Custom) for existing installs.
 class SettingsStore : public QObject
 {
     Q_OBJECT
@@ -393,5 +393,5 @@ private:
     QString m_recordFormat = QStringLiteral("mp4");
     bool m_watchHistory = true;
 
-    int m_schemaVersion = 7;
+    int m_schemaVersion = 8;
 };

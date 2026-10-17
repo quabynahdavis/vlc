@@ -88,6 +88,20 @@ ApplicationWindow {
     property bool effectsOpen: false
     property bool subtitlesOpen: false
 
+    // M8 appearance.titleBar: Custom = frameless window + in-app TitleBar.qml;
+    // System = native OS frame, TitleBar.qml hidden. Live binding so the
+    // choice in Global Settings applies without a restart.
+    readonly property bool customTitleBar: {
+        try {
+            if (typeof SettingsStore !== "undefined" && SettingsStore.titleBar)
+                return SettingsStore.titleBar === "Custom";
+        } catch (e) {
+        }
+        return true;
+    }
+    flags: customTitleBar ? (Qt.Window | Qt.FramelessWindowHint)
+                          : Qt.Window
+
     // ---- M7 mini-player state ----
     // Shares the SAME MediaPlayer (`player`) — no second pipeline, no
     // re-buffer; the mini only mirrors time/volume/title and delegates
@@ -551,7 +565,7 @@ ApplicationWindow {
 
         TitleBar {
             Layout.fillWidth: true
-            visible: !root.uiHidden
+            visible: !root.uiHidden && root.customTitleBar
             breadcrumb: root.currentView === "player" ? qsTr("Videos") : qsTr("Videos › Shows › The Wand › S01")
             maximized: root.visibility === Window.Maximized
             fullscreen: root.visibility === Window.FullScreen
@@ -832,7 +846,7 @@ ApplicationWindow {
         id: effectsDock
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: Ds.Theme.titleBarHeight
+        anchors.topMargin: root.customTitleBar ? Ds.Theme.titleBarHeight : 0
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Ds.Theme.transportHeight
         visible: root.effectsOpen
@@ -844,7 +858,7 @@ ApplicationWindow {
         id: subtitlesPanel
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: Ds.Theme.titleBarHeight
+        anchors.topMargin: root.customTitleBar ? Ds.Theme.titleBarHeight : 0
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Ds.Theme.transportHeight
         visible: root.subtitlesOpen
