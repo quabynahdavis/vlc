@@ -84,6 +84,22 @@ void SettingsStore::resetToDefaults()
     m_miniH = 140;
     m_miniX = -1;
     m_miniY = -1;
+    // M8 fix pass resets (m8/ keys; schema version unchanged at 7).
+    m_playbackSpeed = 1.0;
+    m_loopMode = QStringLiteral("Off");
+    m_resumePlayback = true;
+    m_videoRenderer = QStringLiteral("Automatic");
+    m_hdrPassthrough = false;
+    m_deinterlaceMode = QStringLiteral("Off");
+    m_aspectRatio = QStringLiteral("Default");
+    m_titleBar = QStringLiteral("Custom");
+    m_networkCache = QStringLiteral("3000 ms");
+    m_proxyType = QStringLiteral("None");
+    m_proxyHost.clear();
+    m_threadCount = QStringLiteral("Auto");
+    m_recordPath.clear();
+    m_recordFormat = QStringLiteral("mp4");
+    m_watchHistory = true;
     emit languageChanged();
     emit themeModeChanged();
     emit accentColorChanged();
@@ -105,6 +121,21 @@ void SettingsStore::resetToDefaults()
     emit miniPlayerHeightChanged();
     emit miniPlayerXChanged();
     emit miniPlayerYChanged();
+    emit playbackSpeedChanged();
+    emit loopModeChanged();
+    emit resumePlaybackChanged();
+    emit videoRendererChanged();
+    emit hdrPassthroughChanged();
+    emit deinterlaceModeChanged();
+    emit aspectRatioChanged();
+    emit titleBarChanged();
+    emit networkCacheChanged();
+    emit proxyTypeChanged();
+    emit proxyHostChanged();
+    emit threadCountChanged();
+    emit recordPathChanged();
+    emit recordFormatChanged();
+    emit watchHistoryChanged();
     qInfo() << "M3 settings: reset to defaults (stub)";
 }
 
@@ -174,6 +205,75 @@ QStringList SettingsStore::logLevelOptions() const
 {
     return QStringList{QStringLiteral("Errors only"), QStringLiteral("Warnings"),
                        QStringLiteral("Info"), QStringLiteral("Debug")};
+}
+
+// --- M8 fix pass option lists (real choices, no placeholders) ---
+QStringList SettingsStore::playbackSpeedOptions() const
+{
+    return QStringList{QStringLiteral("0.25x"), QStringLiteral("0.5x"),
+                       QStringLiteral("0.75x"), QStringLiteral("1.0x"),
+                       QStringLiteral("1.25x"), QStringLiteral("1.5x"),
+                       QStringLiteral("2.0x"), QStringLiteral("4.0x")};
+}
+
+QStringList SettingsStore::loopModeOptions() const
+{
+    return QStringList{QStringLiteral("Off"), QStringLiteral("Loop all"),
+                       QStringLiteral("Repeat one")};
+}
+
+QStringList SettingsStore::rendererOptions() const
+{
+    return QStringList{QStringLiteral("Automatic"), QStringLiteral("OpenGL"),
+                       QStringLiteral("Direct3D 11"), QStringLiteral("Metal"),
+                       QStringLiteral("Software")};
+}
+
+QStringList SettingsStore::deinterlaceOptions() const
+{
+    return QStringList{QStringLiteral("Off"), QStringLiteral("Auto"),
+                       QStringLiteral("Blend"), QStringLiteral("Bob"),
+                       QStringLiteral("Linear"), QStringLiteral("Mean"),
+                       QStringLiteral("X"), QStringLiteral("Yadif"),
+                       QStringLiteral("Yadif (2x)")};
+}
+
+QStringList SettingsStore::aspectRatioOptions() const
+{
+    return QStringList{QStringLiteral("Default"), QStringLiteral("16:9"),
+                       QStringLiteral("4:3"), QStringLiteral("1:1"),
+                       QStringLiteral("21:9"), QStringLiteral("16:10")};
+}
+
+QStringList SettingsStore::titleBarOptions() const
+{
+    // Custom = the in-app TitleBar.qml chrome; System = native OS frame.
+    return QStringList{QStringLiteral("Custom"), QStringLiteral("System")};
+}
+
+QStringList SettingsStore::networkCacheOptions() const
+{
+    return QStringList{QStringLiteral("1000 ms"), QStringLiteral("3000 ms"),
+                       QStringLiteral("6000 ms"), QStringLiteral("10000 ms")};
+}
+
+QStringList SettingsStore::proxyTypeOptions() const
+{
+    return QStringList{QStringLiteral("None"), QStringLiteral("HTTP"),
+                       QStringLiteral("HTTPS"), QStringLiteral("SOCKS5")};
+}
+
+QStringList SettingsStore::threadCountOptions() const
+{
+    return QStringList{QStringLiteral("Auto"), QStringLiteral("1"),
+                       QStringLiteral("2"), QStringLiteral("4"),
+                       QStringLiteral("8")};
+}
+
+QStringList SettingsStore::recordFormatOptions() const
+{
+    return QStringList{QStringLiteral("mp4"), QStringLiteral("mkv"),
+                       QStringLiteral("webm"), QStringLiteral("ts")};
 }
 
 double SettingsStore::eqBand(int index) const
@@ -517,6 +617,174 @@ void SettingsStore::saveMiniPlayerGeometry(int w, int h, int x, int y)
     qInfo() << "M7 mini-player geometry saved:" << m_miniW << "x" << m_miniH << "@" << m_miniX << "," << m_miniY;
 }
 
+// --- M8 fix pass typed accessors (persist + log + notify) ---
+double SettingsStore::playbackSpeed() const { return m_playbackSpeed; }
+void SettingsStore::setPlaybackSpeed(double v)
+{
+    const double clamped = qBound(0.25, v, 4.0);
+    if (qFuzzyCompare(m_playbackSpeed + 1.0, clamped + 1.0))
+        return;
+    m_playbackSpeed = clamped;
+    put(QStringLiteral("m8/playback/speed"), m_playbackSpeed);
+    qInfo() << "M8 settings: playback/speed =" << m_playbackSpeed;
+    emit playbackSpeedChanged();
+}
+
+QString SettingsStore::loopMode() const { return m_loopMode; }
+void SettingsStore::setLoopMode(const QString &v)
+{
+    if (m_loopMode == v)
+        return;
+    m_loopMode = v.isEmpty() ? QStringLiteral("Off") : v;
+    put(QStringLiteral("m8/playback/loopMode"), m_loopMode);
+    qInfo() << "M8 settings: playback/loopMode =" << m_loopMode;
+    emit loopModeChanged();
+}
+
+bool SettingsStore::resumePlayback() const { return m_resumePlayback; }
+void SettingsStore::setResumePlayback(bool v)
+{
+    if (m_resumePlayback == v)
+        return;
+    m_resumePlayback = v;
+    put(QStringLiteral("m8/playback/resume"), v);
+    qInfo() << "M8 settings: playback/resume =" << v;
+    emit resumePlaybackChanged();
+}
+
+QString SettingsStore::videoRenderer() const { return m_videoRenderer; }
+void SettingsStore::setVideoRenderer(const QString &v)
+{
+    if (m_videoRenderer == v)
+        return;
+    m_videoRenderer = v.isEmpty() ? QStringLiteral("Automatic") : v;
+    put(QStringLiteral("m8/video/renderer"), m_videoRenderer);
+    qInfo() << "M8 settings: video/renderer =" << m_videoRenderer;
+    emit videoRendererChanged();
+}
+
+bool SettingsStore::hdrPassthrough() const { return m_hdrPassthrough; }
+void SettingsStore::setHdrPassthrough(bool v)
+{
+    if (m_hdrPassthrough == v)
+        return;
+    m_hdrPassthrough = v;
+    put(QStringLiteral("m8/video/hdrPassthrough"), v);
+    qInfo() << "M8 settings: video/hdrPassthrough =" << v;
+    emit hdrPassthroughChanged();
+}
+
+QString SettingsStore::deinterlaceMode() const { return m_deinterlaceMode; }
+void SettingsStore::setDeinterlaceMode(const QString &v)
+{
+    if (m_deinterlaceMode == v)
+        return;
+    m_deinterlaceMode = v.isEmpty() ? QStringLiteral("Off") : v;
+    put(QStringLiteral("m8/video/deinterlace"), m_deinterlaceMode);
+    qInfo() << "M8 settings: video/deinterlace =" << m_deinterlaceMode;
+    emit deinterlaceModeChanged();
+}
+
+QString SettingsStore::aspectRatio() const { return m_aspectRatio; }
+void SettingsStore::setAspectRatio(const QString &v)
+{
+    if (m_aspectRatio == v)
+        return;
+    m_aspectRatio = v.isEmpty() ? QStringLiteral("Default") : v;
+    put(QStringLiteral("m8/video/aspect"), m_aspectRatio);
+    qInfo() << "M8 settings: video/aspect =" << m_aspectRatio;
+    emit aspectRatioChanged();
+}
+
+QString SettingsStore::titleBar() const { return m_titleBar; }
+void SettingsStore::setTitleBar(const QString &v)
+{
+    if (m_titleBar == v)
+        return;
+    m_titleBar = v.isEmpty() ? QStringLiteral("Custom") : v;
+    put(QStringLiteral("m8/appearance/titleBar"), m_titleBar);
+    qInfo() << "M8 settings: appearance/titleBar =" << m_titleBar
+            << "(Custom = in-app chrome, System = native frame)";
+    emit titleBarChanged();
+}
+
+QString SettingsStore::networkCache() const { return m_networkCache; }
+void SettingsStore::setNetworkCache(const QString &v)
+{
+    if (m_networkCache == v)
+        return;
+    m_networkCache = v.isEmpty() ? QStringLiteral("3000 ms") : v;
+    put(QStringLiteral("m8/network/cacheMs"), m_networkCache);
+    qInfo() << "M8 settings: network/cacheMs =" << m_networkCache;
+    emit networkCacheChanged();
+}
+
+QString SettingsStore::proxyType() const { return m_proxyType; }
+void SettingsStore::setProxyType(const QString &v)
+{
+    if (m_proxyType == v)
+        return;
+    m_proxyType = v.isEmpty() ? QStringLiteral("None") : v;
+    put(QStringLiteral("m8/network/proxyType"), m_proxyType);
+    qInfo() << "M8 settings: network/proxyType =" << m_proxyType;
+    emit proxyTypeChanged();
+}
+
+QString SettingsStore::proxyHost() const { return m_proxyHost; }
+void SettingsStore::setProxyHost(const QString &v)
+{
+    if (m_proxyHost == v)
+        return;
+    m_proxyHost = v;
+    put(QStringLiteral("m8/network/proxyHost"), m_proxyHost);
+    qInfo() << "M8 settings: network/proxyHost =" << m_proxyHost;
+    emit proxyHostChanged();
+}
+
+QString SettingsStore::threadCount() const { return m_threadCount; }
+void SettingsStore::setThreadCount(const QString &v)
+{
+    if (m_threadCount == v)
+        return;
+    m_threadCount = v.isEmpty() ? QStringLiteral("Auto") : v;
+    put(QStringLiteral("m8/performance/threads"), m_threadCount);
+    qInfo() << "M8 settings: performance/threads =" << m_threadCount;
+    emit threadCountChanged();
+}
+
+QString SettingsStore::recordPath() const { return m_recordPath; }
+void SettingsStore::setRecordPath(const QString &v)
+{
+    if (m_recordPath == v)
+        return;
+    m_recordPath = v;
+    put(QStringLiteral("m8/recording/path"), m_recordPath);
+    qInfo() << "M8 settings: recording/path =" << m_recordPath;
+    emit recordPathChanged();
+}
+
+QString SettingsStore::recordFormat() const { return m_recordFormat; }
+void SettingsStore::setRecordFormat(const QString &v)
+{
+    if (m_recordFormat == v)
+        return;
+    m_recordFormat = v.isEmpty() ? QStringLiteral("mp4") : v;
+    put(QStringLiteral("m8/recording/format"), m_recordFormat);
+    qInfo() << "M8 settings: recording/format =" << m_recordFormat;
+    emit recordFormatChanged();
+}
+
+bool SettingsStore::watchHistory() const { return m_watchHistory; }
+void SettingsStore::setWatchHistory(bool v)
+{
+    if (m_watchHistory == v)
+        return;
+    m_watchHistory = v;
+    put(QStringLiteral("m8/privacy/watchHistory"), v);
+    qInfo() << "M8 settings: privacy/watchHistory =" << v;
+    emit watchHistoryChanged();
+}
+
 bool SettingsStore::eqEnabled() const { return m_eqEnabled; }
 void SettingsStore::setEqEnabled(bool v)
 {
@@ -736,6 +1004,22 @@ void SettingsStore::loadAll()
     m_miniH = s.value(QStringLiteral("m7/miniPlayer/size/h"), m_miniH).toInt();
     m_miniX = s.value(QStringLiteral("m7/miniPlayer/size/x"), m_miniX).toInt();
     m_miniY = s.value(QStringLiteral("m7/miniPlayer/size/y"), m_miniY).toInt();
+    // M8 fix pass (new keys; existing v7 installs read them at defaults).
+    m_playbackSpeed = s.value(QStringLiteral("m8/playback/speed"), m_playbackSpeed).toDouble();
+    m_loopMode = s.value(QStringLiteral("m8/playback/loopMode"), m_loopMode).toString();
+    m_resumePlayback = s.value(QStringLiteral("m8/playback/resume"), m_resumePlayback).toBool();
+    m_videoRenderer = s.value(QStringLiteral("m8/video/renderer"), m_videoRenderer).toString();
+    m_hdrPassthrough = s.value(QStringLiteral("m8/video/hdrPassthrough"), m_hdrPassthrough).toBool();
+    m_deinterlaceMode = s.value(QStringLiteral("m8/video/deinterlace"), m_deinterlaceMode).toString();
+    m_aspectRatio = s.value(QStringLiteral("m8/video/aspect"), m_aspectRatio).toString();
+    m_titleBar = s.value(QStringLiteral("m8/appearance/titleBar"), m_titleBar).toString();
+    m_networkCache = s.value(QStringLiteral("m8/network/cacheMs"), m_networkCache).toString();
+    m_proxyType = s.value(QStringLiteral("m8/network/proxyType"), m_proxyType).toString();
+    m_proxyHost = s.value(QStringLiteral("m8/network/proxyHost"), m_proxyHost).toString();
+    m_threadCount = s.value(QStringLiteral("m8/performance/threads"), m_threadCount).toString();
+    m_recordPath = s.value(QStringLiteral("m8/recording/path"), m_recordPath).toString();
+    m_recordFormat = s.value(QStringLiteral("m8/recording/format"), m_recordFormat).toString();
+    m_watchHistory = s.value(QStringLiteral("m8/privacy/watchHistory"), m_watchHistory).toBool();
 }
 
 void SettingsStore::migrateIfNeeded()

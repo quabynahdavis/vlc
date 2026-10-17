@@ -150,6 +150,13 @@ QtObject {
     readonly property color subtitleText: "#B8B8B8"
     readonly property color subtitleOutline: "#0C0C0C"
     readonly property color colorPreview: "#FF0000"
+    // M8 fix pass: subtitle text/outline swatch palette (text colors then
+    // dark outline colors). Bound by SubtitlesPanel swatch grids.
+    readonly property var subtitleSwatches: [
+        "#B8B8B8", "#FFFFFF", "#FFD75E", "#FF6B6B",
+        "#7CE38B", "#58A6FF", "#F778BA", "#E8D44D",
+        "#0C0C0C", "#1A1A1A", "#3B2F2F", "#1E2A44"
+    ]
 
     // 9 accent swatches in the Appearance row (VLC orange selected).
     readonly property var accentSwatches: [

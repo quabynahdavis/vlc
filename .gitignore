@@ -84,3 +84,4 @@ CMakeLists.txt.user*
 /.qtcreator/
 app/build*/
 app/*.user*
+/logs

@@ -17,6 +17,12 @@
 // M6 adds telemetryEnabled (Privacy page, default OFF — telemetry stays
 // opt-in), updateAvailable/updateVersion (auto-update stub), and
 // exportLogBundle() (delegates to Logger). Schema v6 migrates the new keys.
+// M8 fix pass: fills the remaining Global Settings pages (playback speed /
+// loop / resume, video renderer / HDR / deinterlace / aspect, network cache /
+// proxy, performance threads, recording path / format, privacy watch-history)
+// and adds appearance.titleBar (Custom | System, default Custom). New keys
+// live under the m8/ namespace; schemaVersion stays 7 so the M7 mini-player
+// schema remains intact (fresh keys read back at their defaults).
 class SettingsStore : public QObject
 {
     Q_OBJECT
@@ -49,6 +55,23 @@ class SettingsStore : public QObject
     Q_PROPERTY(int miniPlayerHeight READ miniPlayerHeight WRITE setMiniPlayerHeight NOTIFY miniPlayerHeightChanged)
     Q_PROPERTY(int miniPlayerX READ miniPlayerX WRITE setMiniPlayerX NOTIFY miniPlayerXChanged)
     Q_PROPERTY(int miniPlayerY READ miniPlayerY WRITE setMiniPlayerY NOTIFY miniPlayerYChanged)
+
+    // M8 fix pass: remaining Global Settings pages (m8/ keys, schema v7).
+    Q_PROPERTY(double playbackSpeed READ playbackSpeed WRITE setPlaybackSpeed NOTIFY playbackSpeedChanged)
+    Q_PROPERTY(QString loopMode READ loopMode WRITE setLoopMode NOTIFY loopModeChanged)
+    Q_PROPERTY(bool resumePlayback READ resumePlayback WRITE setResumePlayback NOTIFY resumePlaybackChanged)
+    Q_PROPERTY(QString videoRenderer READ videoRenderer WRITE setVideoRenderer NOTIFY videoRendererChanged)
+    Q_PROPERTY(bool hdrPassthrough READ hdrPassthrough WRITE setHdrPassthrough NOTIFY hdrPassthroughChanged)
+    Q_PROPERTY(QString deinterlaceMode READ deinterlaceMode WRITE setDeinterlaceMode NOTIFY deinterlaceModeChanged)
+    Q_PROPERTY(QString aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
+    Q_PROPERTY(QString titleBar READ titleBar WRITE setTitleBar NOTIFY titleBarChanged)
+    Q_PROPERTY(QString networkCache READ networkCache WRITE setNetworkCache NOTIFY networkCacheChanged)
+    Q_PROPERTY(QString proxyType READ proxyType WRITE setProxyType NOTIFY proxyTypeChanged)
+    Q_PROPERTY(QString proxyHost READ proxyHost WRITE setProxyHost NOTIFY proxyHostChanged)
+    Q_PROPERTY(QString threadCount READ threadCount WRITE setThreadCount NOTIFY threadCountChanged)
+    Q_PROPERTY(QString recordPath READ recordPath WRITE setRecordPath NOTIFY recordPathChanged)
+    Q_PROPERTY(QString recordFormat READ recordFormat WRITE setRecordFormat NOTIFY recordFormatChanged)
+    Q_PROPERTY(bool watchHistory READ watchHistory WRITE setWatchHistory NOTIFY watchHistoryChanged)
 
     // Audio defaults (EQ + spatial rows).
     Q_PROPERTY(bool eqEnabled READ eqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
@@ -90,6 +113,16 @@ public:
     Q_INVOKABLE QStringList eqPresetOptions() const;
     Q_INVOKABLE QStringList spatialModeOptions() const;
     Q_INVOKABLE QStringList logLevelOptions() const;
+    Q_INVOKABLE QStringList playbackSpeedOptions() const;
+    Q_INVOKABLE QStringList loopModeOptions() const;
+    Q_INVOKABLE QStringList rendererOptions() const;
+    Q_INVOKABLE QStringList deinterlaceOptions() const;
+    Q_INVOKABLE QStringList aspectRatioOptions() const;
+    Q_INVOKABLE QStringList titleBarOptions() const;
+    Q_INVOKABLE QStringList networkCacheOptions() const;
+    Q_INVOKABLE QStringList proxyTypeOptions() const;
+    Q_INVOKABLE QStringList threadCountOptions() const;
+    Q_INVOKABLE QStringList recordFormatOptions() const;
 
     Q_INVOKABLE double eqBand(int index) const;
     Q_INVOKABLE void setEqBand(int index, double dB);
@@ -162,6 +195,38 @@ public:
     int miniPlayerY() const;
     void setMiniPlayerY(int v);
 
+    // M8 fix pass typed accessors.
+    double playbackSpeed() const;
+    void setPlaybackSpeed(double v);
+    QString loopMode() const;
+    void setLoopMode(const QString &v);
+    bool resumePlayback() const;
+    void setResumePlayback(bool v);
+    QString videoRenderer() const;
+    void setVideoRenderer(const QString &v);
+    bool hdrPassthrough() const;
+    void setHdrPassthrough(bool v);
+    QString deinterlaceMode() const;
+    void setDeinterlaceMode(const QString &v);
+    QString aspectRatio() const;
+    void setAspectRatio(const QString &v);
+    QString titleBar() const;
+    void setTitleBar(const QString &v);
+    QString networkCache() const;
+    void setNetworkCache(const QString &v);
+    QString proxyType() const;
+    void setProxyType(const QString &v);
+    QString proxyHost() const;
+    void setProxyHost(const QString &v);
+    QString threadCount() const;
+    void setThreadCount(const QString &v);
+    QString recordPath() const;
+    void setRecordPath(const QString &v);
+    QString recordFormat() const;
+    void setRecordFormat(const QString &v);
+    bool watchHistory() const;
+    void setWatchHistory(bool v);
+
     bool eqEnabled() const;
     void setEqEnabled(bool v);
     QString eqPreset() const;
@@ -224,6 +289,22 @@ signals:
     void miniPlayerHeightChanged();
     void miniPlayerXChanged();
     void miniPlayerYChanged();
+    // M8 fix pass notifications.
+    void playbackSpeedChanged();
+    void loopModeChanged();
+    void resumePlaybackChanged();
+    void videoRendererChanged();
+    void hdrPassthroughChanged();
+    void deinterlaceModeChanged();
+    void aspectRatioChanged();
+    void titleBarChanged();
+    void networkCacheChanged();
+    void proxyTypeChanged();
+    void proxyHostChanged();
+    void threadCountChanged();
+    void recordPathChanged();
+    void recordFormatChanged();
+    void watchHistoryChanged();
     void eqEnabledChanged();
     void eqPresetChanged();
     void eqBandsChanged();
@@ -294,6 +375,23 @@ private:
     int m_miniH = 140;
     int m_miniX = -1;
     int m_miniY = -1;
+
+    // M8 fix pass state (m8/ keys; schema version stays 7).
+    double m_playbackSpeed = 1.0;
+    QString m_loopMode = QStringLiteral("Off");
+    bool m_resumePlayback = true;
+    QString m_videoRenderer = QStringLiteral("Automatic");
+    bool m_hdrPassthrough = false;
+    QString m_deinterlaceMode = QStringLiteral("Off");
+    QString m_aspectRatio = QStringLiteral("Default");
+    QString m_titleBar = QStringLiteral("Custom");
+    QString m_networkCache = QStringLiteral("3000 ms");
+    QString m_proxyType = QStringLiteral("None");
+    QString m_proxyHost;
+    QString m_threadCount = QStringLiteral("Auto");
+    QString m_recordPath;
+    QString m_recordFormat = QStringLiteral("mp4");
+    bool m_watchHistory = true;
 
     int m_schemaVersion = 7;
 };

@@ -17,8 +17,13 @@ Rectangle {
     property bool isOpen: false
     property string activeTab: "subtitles"
     property bool presetOpen: false
+    // M8 fix pass: font dropdown ships Inter + common system families.
+    property var fontFamilies: ["Inter", "Arial", "Helvetica", "Segoe UI",
+                                "Roboto", "Noto Sans", "Liberation Sans",
+                                "DejaVu Sans", "Courier New", "monospace"]
 
     signal closeRequested
+    signal openAdvancedRequested
 
     function storeAvailable() {
         return typeof SettingsStore !== "undefined";
@@ -148,28 +153,56 @@ Rectangle {
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
-                    TextField {
-                        id: trackField
+                    ComboBox {
+                        id: trackCombo
                         Layout.preferredWidth: 200
                         Layout.preferredHeight: Ds.Theme.inputHeight
-                        text: panel.storeAvailable() ? String(SettingsStore.subTrack) : "1"
-                        color: Ds.Theme.textSecondary
-                        font.pixelSize: 14
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        validator: IntValidator {
-                            bottom: 0
-                            top: 64
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.role: Accessible.ComboBox
+                        Accessible.name: qsTr("Subtitle track")
+                        model: ["Track 1", "Track 2", "Track 3", "Track 4",
+                                "Track 5", "Track 6", "Track 7", "Track 8"]
+                        currentIndex: {
+                            var t = panel.storeAvailable() ? SettingsStore.subTrack : 1;
+                            return Math.max(0, Math.min(7, t - 1));
                         }
-                        onEditingFinished: {
-                            var v = parseInt(text, 10);
-                            if (!isNaN(v) && panel.storeAvailable())
-                                SettingsStore.subTrack = v;
-                            console.log("M3 subtitles track (stub):", text);
+                        onActivated: (i) => {
+                            if (panel.storeAvailable())
+                                SettingsStore.subTrack = i + 1;
+                            console.log("M8 subtitles track:", i + 1);
                         }
                         background: Rectangle {
                             color: Ds.Theme.stage
                             radius: Ds.Theme.radiusMedium
-                            border.color: trackField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
+                            border.color: trackCombo.hovered ? Ds.Theme.accent : Ds.Theme.border
+                        }
+                        contentItem: Text {
+                            leftPadding: 12
+                            text: trackCombo.displayText
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        indicator: Text {
+                            x: trackCombo.width - width - 12
+                            y: (trackCombo.height - height) / 2
+                            text: "﹀"
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                        }
+                        popup: Popup {
+                            y: trackCombo.height + 4
+                            width: trackCombo.width
+                            background: Rectangle {
+                                color: Ds.Theme.stage
+                                radius: Ds.Theme.radiusMedium
+                                border.color: Ds.Theme.border
+                            }
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: trackCombo.popup.visible ? trackCombo.delegateModel : null
+                            }
                         }
                     }
                 }
@@ -185,22 +218,56 @@ Rectangle {
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
-                    TextField {
-                        id: langField
+                    ComboBox {
+                        id: langCombo
                         Layout.preferredWidth: 200
                         Layout.preferredHeight: Ds.Theme.inputHeight
-                        text: panel.storeAvailable() ? SettingsStore.subLanguage : "English"
-                        color: Ds.Theme.textSecondary
-                        font.pixelSize: 14
-                        onEditingFinished: {
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.role: Accessible.ComboBox
+                        Accessible.name: qsTr("Subtitle language")
+                        model: panel.storeAvailable() ? SettingsStore.languageOptions() : ["English"]
+                        currentIndex: {
+                            var opts = panel.storeAvailable() ? SettingsStore.languageOptions() : ["English"];
+                            var i = opts.indexOf(panel.storeAvailable() ? SettingsStore.subLanguage : "English");
+                            return i >= 0 ? i : 0;
+                        }
+                        onActivated: (i) => {
                             if (panel.storeAvailable())
-                                SettingsStore.subLanguage = text;
-                            console.log("M3 subtitles language (stub):", text);
+                                SettingsStore.subLanguage = langCombo.textAt(i);
+                            console.log("M8 subtitles language:", langCombo.textAt(i));
                         }
                         background: Rectangle {
                             color: Ds.Theme.stage
                             radius: Ds.Theme.radiusMedium
-                            border.color: langField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
+                            border.color: langCombo.hovered ? Ds.Theme.accent : Ds.Theme.border
+                        }
+                        contentItem: Text {
+                            leftPadding: 12
+                            text: langCombo.displayText
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        indicator: Text {
+                            x: langCombo.width - width - 12
+                            y: (langCombo.height - height) / 2
+                            text: "﹀"
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                        }
+                        popup: Popup {
+                            y: langCombo.height + 4
+                            width: langCombo.width
+                            background: Rectangle {
+                                color: Ds.Theme.stage
+                                radius: Ds.Theme.radiusMedium
+                                border.color: Ds.Theme.border
+                            }
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: langCombo.popup.visible ? langCombo.delegateModel : null
+                            }
                         }
                     }
                 }
@@ -322,6 +389,82 @@ Rectangle {
                         text: qsTr("+10 s")
                         color: Ds.Theme.textHint
                         font.pixelSize: 12
+                    }
+                }
+                // M8 fix pass: delay nudge buttons (±0.1 / ±0.5 s + reset).
+                // Writes the same SettingsStore.subDelay the slider binds.
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 20
+                    Layout.rightMargin: 20
+                    Layout.topMargin: 4
+                    spacing: 6
+                    Repeater {
+                        model: [
+                            { label: "−0.5", delta: -0.5 },
+                            { label: "−0.1", delta: -0.1 },
+                            { label: "+0.1", delta: 0.1 },
+                            { label: "+0.5", delta: 0.5 }
+                        ]
+                        delegate: Button {
+                            required property var modelData
+                            text: modelData.label
+                            focusPolicy: Qt.StrongFocus
+                            Accessible.role: Accessible.Button
+                            Accessible.name: "Nudge subtitle delay " + modelData.label + " s"
+                            onClicked: {
+                                if (panel.storeAvailable()) {
+                                    var v = Math.max(-10, Math.min(10, SettingsStore.subDelay + modelData.delta));
+                                    SettingsStore.subDelay = v;
+                                    SettingsStore.applySpuDelay();
+                                }
+                                console.log("M8 subtitles delay nudge:", modelData.label);
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 13
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            background: Rectangle {
+                                implicitWidth: 64
+                                implicitHeight: 32
+                                color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                radius: Ds.Theme.radiusMedium
+                                border.color: Ds.Theme.border
+                            }
+                        }
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    Button {
+                        text: qsTr("Reset")
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.role: Accessible.Button
+                        Accessible.name: qsTr("Reset subtitle delay to zero")
+                        onClicked: {
+                            if (panel.storeAvailable()) {
+                                SettingsStore.subDelay = 0;
+                                SettingsStore.applySpuDelay();
+                            }
+                            console.log("M8 subtitles delay reset");
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 13
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            implicitWidth: 72
+                            implicitHeight: 32
+                            color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                            radius: Ds.Theme.radiusMedium
+                            border.color: Ds.Theme.border
+                        }
                     }
                 }
                 RowLayout {
@@ -504,21 +647,55 @@ Rectangle {
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
-                    TextField {
+                    ComboBox {
+                        id: fontCombo
                         Layout.preferredWidth: 200
                         Layout.preferredHeight: Ds.Theme.inputHeight
-                        text: panel.storeAvailable() ? SettingsStore.subFont : "Inter"
-                        color: Ds.Theme.textSecondary
-                        font.pixelSize: 14
-                        onEditingFinished: {
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.role: Accessible.ComboBox
+                        Accessible.name: qsTr("Subtitle font")
+                        model: panel.fontFamilies
+                        currentIndex: {
+                            var i = panel.fontFamilies.indexOf(panel.storeAvailable() ? SettingsStore.subFont : "Inter");
+                            return i >= 0 ? i : 0;
+                        }
+                        onActivated: (i) => {
                             if (panel.storeAvailable())
-                                SettingsStore.subFont = text;
-                            console.log("M3 subtitles font (stub):", text);
+                                SettingsStore.subFont = fontCombo.textAt(i);
+                            console.log("M8 subtitles font:", fontCombo.textAt(i));
                         }
                         background: Rectangle {
                             color: Ds.Theme.stage
                             radius: Ds.Theme.radiusMedium
-                            border.color: Ds.Theme.border
+                            border.color: fontCombo.hovered ? Ds.Theme.accent : Ds.Theme.border
+                        }
+                        contentItem: Text {
+                            leftPadding: 12
+                            text: fontCombo.displayText
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        indicator: Text {
+                            x: fontCombo.width - width - 12
+                            y: (fontCombo.height - height) / 2
+                            text: "﹀"
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 14
+                        }
+                        popup: Popup {
+                            y: fontCombo.height + 4
+                            width: fontCombo.width
+                            background: Rectangle {
+                                color: Ds.Theme.stage
+                                radius: Ds.Theme.radiusMedium
+                                border.color: Ds.Theme.border
+                            }
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: fontCombo.popup.visible ? fontCombo.delegateModel : null
+                            }
                         }
                     }
                 }
@@ -534,34 +711,53 @@ Rectangle {
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
-                    Rectangle {
+                    // M8 fix pass: hex field (persists on edit) + swatch grid.
+                    ColumnLayout {
                         Layout.preferredWidth: 200
-                        Layout.preferredHeight: Ds.Theme.inputHeight
-                        radius: Ds.Theme.radiusMedium
-                        color: Ds.Theme.stage
-                        border.color: Ds.Theme.border
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 8
-                            spacing: 8
-                            Text {
-                                Layout.fillWidth: true
-                                text: panel.storeAvailable() ? SettingsStore.textColor : Ds.Theme.subtitleText.toString().toUpperCase()
-                                color: Ds.Theme.textSecondary
-                                font.pixelSize: 13
+                        spacing: 6
+                        TextField {
+                            id: textHexField
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+                            text: panel.storeAvailable() ? SettingsStore.textColor : Ds.Theme.subtitleText.toString().toUpperCase()
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 13
+                            onEditingFinished: {
+                                if (panel.storeAvailable())
+                                    SettingsStore.textColor = text;
+                                console.log("M8 subtitles textColor hex:", text);
                             }
-                            Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 28
-                                radius: 4
-                                color: Ds.Theme.subtitleText
-                                border.color: Ds.Theme.border
+                            background: Rectangle {
+                                color: Ds.Theme.stage
+                                radius: Ds.Theme.radiusMedium
+                                border.color: textHexField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
                             }
                         }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: console.log("M3 subtitles text color (stub): color picker lands later")
+                        Flow {
+                            Layout.preferredWidth: 200
+                            spacing: 6
+                            Repeater {
+                                model: Ds.Theme.subtitleSwatches
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    required property int index
+                                    width: 26
+                                    height: 26
+                                    radius: 4
+                                    color: modelData
+                                    border.color: (panel.storeAvailable() ? SettingsStore.textColor : Ds.Theme.subtitleText.toString()) === modelData ? Ds.Theme.accent : Ds.Theme.border
+                                    border.width: (panel.storeAvailable() ? SettingsStore.textColor : Ds.Theme.subtitleText.toString()) === modelData ? 2 : 1
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (panel.storeAvailable())
+                                                SettingsStore.textColor = parent.modelData;
+                                            console.log("M8 subtitles textColor swatch:", parent.modelData);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -577,34 +773,53 @@ Rectangle {
                         color: Ds.Theme.textSecondary
                         font.pixelSize: 14
                     }
-                    Rectangle {
+                    // M8 fix pass: hex field (persists on edit) + swatch grid.
+                    ColumnLayout {
                         Layout.preferredWidth: 200
-                        Layout.preferredHeight: Ds.Theme.inputHeight
-                        radius: Ds.Theme.radiusMedium
-                        color: Ds.Theme.stage
-                        border.color: Ds.Theme.border
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 8
-                            spacing: 8
-                            Text {
-                                Layout.fillWidth: true
-                                text: panel.storeAvailable() ? SettingsStore.outlineColor : Ds.Theme.subtitleOutline.toString().toUpperCase()
-                                color: Ds.Theme.textSecondary
-                                font.pixelSize: 13
+                        spacing: 6
+                        TextField {
+                            id: outlineHexField
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+                            text: panel.storeAvailable() ? SettingsStore.outlineColor : Ds.Theme.subtitleOutline.toString().toUpperCase()
+                            color: Ds.Theme.textSecondary
+                            font.pixelSize: 13
+                            onEditingFinished: {
+                                if (panel.storeAvailable())
+                                    SettingsStore.outlineColor = text;
+                                console.log("M8 subtitles outlineColor hex:", text);
                             }
-                            Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 28
-                                radius: 4
-                                color: Ds.Theme.subtitleOutline
-                                border.color: Ds.Theme.border
+                            background: Rectangle {
+                                color: Ds.Theme.stage
+                                radius: Ds.Theme.radiusMedium
+                                border.color: outlineHexField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
                             }
                         }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: console.log("M3 subtitles outline color (stub): color picker lands later")
+                        Flow {
+                            Layout.preferredWidth: 200
+                            spacing: 6
+                            Repeater {
+                                model: Ds.Theme.subtitleSwatches
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    required property int index
+                                    width: 26
+                                    height: 26
+                                    radius: 4
+                                    color: modelData
+                                    border.color: (panel.storeAvailable() ? SettingsStore.outlineColor : Ds.Theme.subtitleOutline.toString()) === modelData ? Ds.Theme.accent : Ds.Theme.border
+                                    border.width: (panel.storeAvailable() ? SettingsStore.outlineColor : Ds.Theme.subtitleOutline.toString()) === modelData ? 2 : 1
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (panel.storeAvailable())
+                                                SettingsStore.outlineColor = parent.modelData;
+                                            console.log("M8 subtitles outlineColor swatch:", parent.modelData);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -664,7 +879,10 @@ Rectangle {
                     Layout.topMargin: 12
                     Layout.bottomMargin: 20
                     focusPolicy: Qt.StrongFocus
-                    onClicked: console.log("M3 open advanced settings (stub)")
+                    onClicked: {
+                        panel.openAdvancedRequested();
+                        console.log("M8 subtitles open advanced -> settings subtitles page");
+                    }
                     contentItem: RowLayout {
                         spacing: 8
                         Text {

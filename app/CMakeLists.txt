@@ -87,6 +87,7 @@ qt_add_qml_module(vlc-redesign-m0
     ThumbnailWorker.qml
     CreatePlaylistDialog.qml
     SettingToggle.qml
+    SettingCombo.qml
     SliderRow.qml
     CollapsiblePanel.qml
     EqualizerBank.qml

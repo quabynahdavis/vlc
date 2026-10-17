@@ -38,6 +38,21 @@ Dialog {
         return typeof SettingsStore !== "undefined";
     }
 
+    // M8 fix pass helpers: combo currentIndex lookup + speed label formatting
+    // (0.25 -> "0.25x", 1 -> "1.0x" so the value matches the option strings).
+    function comboIndex(options, current) {
+        var i = options.indexOf(current);
+        return i >= 0 ? i : 0;
+    }
+
+    function speedText(s) {
+        var v = Math.round(s * 100) / 100;
+        var str = v.toString();
+        if (str.indexOf(".") === -1)
+            str += ".0";
+        return str + "x";
+    }
+
     function pageTitle() {
         if (dlg.activePage === "audio")
             return qsTr("Audio Defaults");
@@ -939,6 +954,41 @@ Dialog {
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
+                        Text {
+                            text: qsTr("Decoding")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Decode threads  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: threadsCombo
+                                label: qsTr("Decode threads")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.threadCountOptions() : ["Auto"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.threadCountOptions(), SettingsStore.threadCount) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.threadCount = threadsCombo.textAt(i);
+                                    console.log("M8 performance threads:", threadsCombo.textAt(i));
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Auto picks the decoder thread count from the CPU. Lower it on very old machines; raise it for high-bitrate 4K.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
                     }
 
                     // ===== Privacy page (M6): telemetry defaults OFF (opt-in).
@@ -981,15 +1031,276 @@ Dialog {
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
+                        Text {
+                            text: qsTr("History")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Remember playback history  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.watchHistory : true
+                                accessibleLabel: "Remember playback history"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.watchHistory = on;
+                                    console.log("M8 privacy watchHistory:", on);
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Recently played items are stored locally only. Clearing wipes the recents list.")
+                                color: Ds.Theme.textHint
+                                font.pixelSize: 12
+                                wrapMode: Text.WordWrap
+                            }
+                            Button {
+                                text: qsTr("Clear history")
+                                focusPolicy: Qt.StrongFocus
+                                Accessible.role: Accessible.Button
+                                Accessible.name: "Clear playback history"
+                                Accessible.description: qsTr("Wipe the local recents list (stub)")
+                                onClicked: console.log("M8 clear history (stub: recents wipe lands with the library store)")
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 13
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 120
+                                    implicitHeight: 38
+                                    color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                    radius: Ds.Theme.radiusMedium
+                                    border.color: Ds.Theme.border
+                                }
+                            }
+                        }
                     }
 
-                    // ===== Interface page (M7): mini-player master + 4
-                    // triggers + always-on-top. Every trigger is
-                    // individually toggleable; all default ON.
+                    // ===== Interface page (M7 mini-player + M8 appearance):
+                    // language / theme / accent / icon pack, the NEW titleBar
+                    // System/Custom row, then the mini-player trigger rows.
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: dlg.activePage === "interface"
                         spacing: 14
+                        Text {
+                            text: qsTr("Appearance")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Interface language")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: langCombo
+                                label: qsTr("Interface language")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.languageOptions() : ["English"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.languageOptions(), SettingsStore.language) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.language = langCombo.textAt(i);
+                                    console.log("M8 appearance language:", langCombo.textAt(i));
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Theme")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            RowLayout {
+                                spacing: 6
+                                Repeater {
+                                    model: ["Dark", "Light", "System"]
+                                    delegate: Button {
+                                        required property string modelData
+                                        text: modelData
+                                        checkable: true
+                                        checked: dlg.storeAvailable() ? SettingsStore.themeMode === modelData
+                                                                      : modelData === "Dark"
+                                        focusPolicy: Qt.StrongFocus
+                                        onClicked: {
+                                            if (dlg.storeAvailable())
+                                                SettingsStore.themeMode = modelData;
+                                            console.log("M8 appearance theme:", modelData);
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: parent.checked ? Ds.Theme.accent : Ds.Theme.textSecondary
+                                            font.pixelSize: 14
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        background: Rectangle {
+                                            implicitWidth: 104
+                                            implicitHeight: 40
+                                            radius: Ds.Theme.radiusMedium
+                                            color: parent.checked ? Ds.Theme.accentPressed : Ds.Theme.bgElevated
+                                            opacity: parent.checked ? 0.55 : 1.0
+                                            border.color: parent.checked ? Ds.Theme.accent : Ds.Theme.border
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Accent color")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            RowLayout {
+                                spacing: 8
+                                Repeater {
+                                    model: Ds.Theme.accentSwatches
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        required property int index
+                                        width: 30
+                                        height: 30
+                                        radius: 4
+                                        color: modelData
+                                        border.color: {
+                                            var cur = dlg.storeAvailable() ? SettingsStore.accentColor : Ds.Theme.accentSwatches[0];
+                                            return cur === modelData ? Ds.Theme.accent : "transparent";
+                                        }
+                                        border.width: 3
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                if (dlg.storeAvailable())
+                                                    SettingsStore.accentColor = parent.modelData;
+                                                console.log("M8 accent:", parent.modelData);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Icon pack")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            RowLayout {
+                                spacing: 6
+                                Repeater {
+                                    model: Ds.Theme.iconPacks
+                                    delegate: Button {
+                                        required property string modelData
+                                        text: modelData
+                                        checkable: true
+                                        checked: {
+                                            var cur = dlg.storeAvailable() ? SettingsStore.iconPack : "Two-tone";
+                                            return cur === modelData;
+                                        }
+                                        focusPolicy: Qt.StrongFocus
+                                        onClicked: {
+                                            if (dlg.storeAvailable())
+                                                SettingsStore.iconPack = modelData;
+                                            console.log("M8 IconTheme pack:", modelData);
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: parent.checked ? Ds.Theme.accent : Ds.Theme.textSecondary
+                                            font.pixelSize: 12
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        background: Rectangle {
+                                            implicitWidth: 86
+                                            implicitHeight: 36
+                                            radius: Ds.Theme.radiusMedium
+                                            color: parent.checked ? Ds.Theme.accentPressed : Ds.Theme.bgElevated
+                                            opacity: parent.checked ? 0.55 : 1.0
+                                            border.color: parent.checked ? Ds.Theme.accent : Ds.Theme.border
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Lucide / Phosphor / Material fall back to Two-tone in M4 (full 3-pack bundling + attribution follow-up).")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // M8 NEW: appearance.titleBar — Custom keeps the in-app
+                        // TitleBar.qml chrome; System hides it and the window
+                        // uses its native OS frame (Main.qml flags binding).
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Title bar  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingCombo {
+                                id: titleBarCombo
+                                label: qsTr("Title bar")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.titleBarOptions() : ["Custom"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.titleBarOptions(), SettingsStore.titleBar) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.titleBar = titleBarCombo.textAt(i);
+                                    console.log("M8 appearance titleBar:", titleBarCombo.textAt(i));
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Custom uses the in-app title bar; System hides it and the window frame becomes the native OS title bar.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+
                         Text {
                             text: qsTr("Mini Player")
                             color: Ds.Theme.textPrimary
@@ -1119,10 +1430,550 @@ Dialog {
                         }
                     }
 
-                    // ===== Placeholder pages =====
+                    // ===== Playback page (M8 fix pass): speed, loop/repeat,
+                    // resume — all persisted via m8/playback/* keys.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage !== "general" && dlg.activePage !== "audio" && dlg.activePage !== "subtitles" && dlg.activePage !== "performance" && dlg.activePage !== "privacy" && dlg.activePage !== "interface"
+                        visible: dlg.activePage === "playback"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Playback")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Playback speed  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: speedCombo
+                                label: qsTr("Playback speed")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.playbackSpeedOptions() : ["1.0x"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.playbackSpeedOptions(), dlg.speedText(dlg.storeAvailable() ? SettingsStore.playbackSpeed : 1.0)) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.playbackSpeed = parseFloat(speedCombo.textAt(i));
+                                    console.log("M8 playback speed:", speedCombo.textAt(i));
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Loop / repeat  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: loopCombo
+                                label: qsTr("Loop / repeat")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.loopModeOptions() : ["Off"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.loopModeOptions(), SettingsStore.loopMode) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.loopMode = loopCombo.textAt(i);
+                                    console.log("M8 playback loopMode:", loopCombo.textAt(i));
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Resume playback position on startup  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.resumePlayback : true
+                                accessibleLabel: "Resume playback position on startup"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.resumePlayback = on;
+                                    console.log("M8 playback resume:", on);
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Speed applies to the next item played; loop/repeat and resume persist across restarts (libVLC mapping lands with the engine).")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    // ===== Video page (M8 fix pass): renderer, HDR,
+                    // deinterlace, aspect ratio.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "video"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Video")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Output renderer  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: rendererCombo
+                                label: qsTr("Output renderer")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.rendererOptions() : ["Automatic"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.rendererOptions(), SettingsStore.videoRenderer) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.videoRenderer = rendererCombo.textAt(i);
+                                    console.log("M8 video renderer:", rendererCombo.textAt(i));
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("HDR passthrough  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                            }
+                            SettingToggle {
+                                checked: dlg.storeAvailable() ? SettingsStore.hdrPassthrough : false
+                                accessibleLabel: "HDR passthrough"
+                                onToggled: (on) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.hdrPassthrough = on;
+                                    console.log("M8 video HDR:", on);
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Deinterlace  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: deintCombo
+                                label: qsTr("Deinterlace")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.deinterlaceOptions() : ["Off"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.deinterlaceOptions(), SettingsStore.deinterlaceMode) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.deinterlaceMode = deintCombo.textAt(i);
+                                    console.log("M8 video deinterlace:", deintCombo.textAt(i));
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Aspect ratio  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: aspectCombo
+                                label: qsTr("Aspect ratio")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.aspectRatioOptions() : ["Default"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.aspectRatioOptions(), SettingsStore.aspectRatio) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.aspectRatio = aspectCombo.textAt(i);
+                                    console.log("M8 video aspect:", aspectCombo.textAt(i));
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Renderer and deinterlace apply at playback start; aspect ratio overrides the stream's stored ratio. HDR passthrough needs an HDR-capable display.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    // ===== Controls page (M8 fix pass): shortcut editor stub
+                    // list — rows mirror the wired Main.qml shortcuts.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "controls"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Controls")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Keyboard shortcuts. Editing lands in a future pass — every row shows the binding wired in Main.qml.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        Repeater {
+                            model: ListModel {
+                                id: shortcutModel
+                                ListElement { action: "Play / Pause"; keys: "Space" }
+                                ListElement { action: "Stop"; keys: "S" }
+                                ListElement { action: "Previous"; keys: "P" }
+                                ListElement { action: "Next"; keys: "N" }
+                                ListElement { action: "Record"; keys: "R" }
+                                ListElement { action: "Hide interface"; keys: "Ctrl+\\" }
+                                ListElement { action: "Player view"; keys: "Ctrl+1" }
+                                ListElement { action: "Library view"; keys: "Ctrl+2" }
+                                ListElement { action: "Mini player"; keys: "Ctrl+M" }
+                                ListElement { action: "Queue"; keys: "Q" }
+                                ListElement { action: "Settings"; keys: "Ctrl+," }
+                                ListElement { action: "Effects"; keys: "Ctrl+E" }
+                                ListElement { action: "Subtitles"; keys: "Ctrl+T" }
+                                ListElement { action: "Open Media"; keys: "Ctrl+O" }
+                                ListElement { action: "Quit"; keys: "Ctrl+Q" }
+                            }
+                            delegate: RowLayout {
+                                required property string action
+                                required property string keys
+                                Layout.fillWidth: true
+                                spacing: 12
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: action
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 14
+                                }
+                                Rectangle {
+                                    Layout.preferredWidth: 110
+                                    Layout.preferredHeight: 34
+                                    radius: Ds.Theme.radiusMedium
+                                    color: Ds.Theme.bgElevated
+                                    border.color: Ds.Theme.border
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: keys
+                                        color: Ds.Theme.textPrimary
+                                        font.pixelSize: 13
+                                        font.family: "monospace"
+                                    }
+                                }
+                                Button {
+                                    text: qsTr("Edit")
+                                    focusPolicy: Qt.StrongFocus
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: "Edit shortcut for " + action
+                                    onClicked: console.log("M8 shortcut edit (stub):", action, "->", keys)
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: Ds.Theme.textSecondary
+                                        font.pixelSize: 13
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: Rectangle {
+                                        implicitWidth: 72
+                                        implicitHeight: 34
+                                        color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                        radius: Ds.Theme.radiusMedium
+                                        border.color: Ds.Theme.border
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ===== Network page (M8 fix pass): cache + proxy.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "network"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Network")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Network caching  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: cacheCombo
+                                label: qsTr("Network caching")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.networkCacheOptions() : ["3000 ms"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.networkCacheOptions(), SettingsStore.networkCache) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.networkCache = cacheCombo.textAt(i);
+                                    console.log("M8 network cache:", cacheCombo.textAt(i));
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Higher caching smooths streams on slow networks at the cost of added startup delay (applied to network opens, not local files).")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        Text {
+                            text: qsTr("Proxy")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Proxy type  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: proxyCombo
+                                label: qsTr("Proxy type")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.proxyTypeOptions() : ["None"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.proxyTypeOptions(), SettingsStore.proxyType) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.proxyType = proxyCombo.textAt(i);
+                                    console.log("M8 network proxyType:", proxyCombo.textAt(i));
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Proxy server")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            TextField {
+                                id: proxyHostField
+                                Layout.preferredWidth: 220
+                                Layout.preferredHeight: Ds.Theme.inputHeight
+                                enabled: dlg.storeAvailable() ? SettingsStore.proxyType !== "None" : false
+                                text: dlg.storeAvailable() ? SettingsStore.proxyHost : ""
+                                placeholderText: qsTr("proxy.example.com")
+                                color: Ds.Theme.textPrimary
+                                font.pixelSize: 13
+                                onEditingFinished: {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.proxyHost = text;
+                                    console.log("M8 network proxyHost (stub):", text);
+                                }
+                                background: Rectangle {
+                                    color: Ds.Theme.stage
+                                    radius: Ds.Theme.radiusMedium
+                                    border.color: proxyHostField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
+                                }
+                            }
+                            TextField {
+                                id: proxyPortField
+                                Layout.preferredWidth: 90
+                                Layout.preferredHeight: Ds.Theme.inputHeight
+                                enabled: proxyHostField.enabled
+                                text: "8080"
+                                placeholderText: qsTr("Port")
+                                color: Ds.Theme.textPrimary
+                                font.pixelSize: 13
+                                inputMethodHints: Qt.ImhDigitsOnly
+                                onEditingFinished: console.log("M8 network proxyPort (stub):", text)
+                                background: Rectangle {
+                                    color: Ds.Theme.stage
+                                    radius: Ds.Theme.radiusMedium
+                                    border.color: proxyPortField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
+                                }
+                            }
+                        }
+                    }
+
+                    // ===== Recording page (M8 fix pass): path + format.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "recording"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Recording")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Record path  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            TextField {
+                                id: recPathField
+                                Layout.preferredWidth: 220
+                                Layout.preferredHeight: Ds.Theme.inputHeight
+                                text: dlg.storeAvailable() ? SettingsStore.recordPath : ""
+                                placeholderText: qsTr("~/Videos")
+                                color: Ds.Theme.textPrimary
+                                font.pixelSize: 13
+                                onEditingFinished: {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.recordPath = text;
+                                    console.log("M8 recording path (stub):", text);
+                                }
+                                background: Rectangle {
+                                    color: Ds.Theme.stage
+                                    radius: Ds.Theme.radiusMedium
+                                    border.color: recPathField.activeFocus ? Ds.Theme.accent : Ds.Theme.border
+                                }
+                            }
+                            Button {
+                                text: qsTr("Browse")
+                                focusPolicy: Qt.StrongFocus
+                                onClicked: {
+                                    console.log("M8 record browse (stub: file picker lands later)");
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.recordPath = "/tmp/vlc-recordings";
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 14
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 110
+                                    implicitHeight: Ds.Theme.inputHeight
+                                    radius: Ds.Theme.radiusMedium
+                                    color: parent.hovered ? Ds.Theme.bgHover : Ds.Theme.bgElevated
+                                    border.color: Ds.Theme.border
+                                }
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Record format  ⓘ")
+                                color: Ds.Theme.textSecondary
+                                font.pixelSize: 14
+                            }
+                            SettingCombo {
+                                id: recFormatCombo
+                                label: qsTr("Record format")
+                                Layout.preferredWidth: 320
+                                model: dlg.storeAvailable() ? SettingsStore.recordFormatOptions() : ["mp4"]
+                                currentIndex: dlg.storeAvailable() ? dlg.comboIndex(SettingsStore.recordFormatOptions(), SettingsStore.recordFormat) : 0
+                                onActivated: (i) => {
+                                    if (dlg.storeAvailable())
+                                        SettingsStore.recordFormat = recFormatCombo.textAt(i);
+                                    console.log("M8 recording format:", recFormatCombo.textAt(i));
+                                }
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Recordings use the R toggle in the transport. Path + format persist; the real capture pipeline lands with the engine.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    // ===== Extensions page (M8 fix pass): list stub.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "extensions"
+                        spacing: 14
+                        Text {
+                            text: qsTr("Extensions")
+                            color: Ds.Theme.textPrimary
+                            font.pixelSize: 18
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Enable or disable bundled extensions. The extension manager + store lands in a future pass — toggles persist locally only.")
+                            color: Ds.Theme.textHint
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+                        Repeater {
+                            model: ListModel {
+                                id: extensionModel
+                                ListElement { name: "Lua interface"; version: "3.0.0"; enabled: true }
+                                ListElement { name: "Album art downloader"; version: "1.2.0"; enabled: false }
+                                ListElement { name: "Subtitle downloaders"; version: "2.1.0"; enabled: false }
+                                ListElement { name: "Visualizations"; version: "1.0.0"; enabled: true }
+                            }
+                            delegate: RowLayout {
+                                required property string name
+                                required property string version
+                                required property bool enabled
+                                Layout.fillWidth: true
+                                spacing: 12
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: name + "  (" + version + ")"
+                                    color: Ds.Theme.textSecondary
+                                    font.pixelSize: 14
+                                    elide: Text.ElideRight
+                                }
+                                SettingToggle {
+                                    checked: enabled
+                                    accessibleLabel: name
+                                    onToggled: (on) => console.log("M8 extension toggle (stub):", name, on)
+                                }
+                            }
+                        }
+                    }
+
+                    // ===== Library page: placeholder (not in the M8 pass).
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: dlg.activePage === "library"
                         spacing: 12
                         Text {
                             text: dlg.pageTitle()

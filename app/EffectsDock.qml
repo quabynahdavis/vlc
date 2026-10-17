@@ -65,6 +65,18 @@ Rectangle {
     property int cropBottom: 0
     property int cropLeft: 0
     property int cropRight: 0
+    // M8 fix pass: EQ band state (Preamp + 10 bands, keys effects/eq/*).
+    property real eqPreamp: 12.0
+    property real eqB60: 0.0
+    property real eqB170: 0.0
+    property real eqB310: 0.0
+    property real eqB600: 0.0
+    property real eqB1k: 0.0
+    property real eqB3k: 0.0
+    property real eqB6k: 0.0
+    property real eqB12k: 0.0
+    property real eqB14k: 0.0
+    property real eqB16k: 0.0
 
     Component.onCompleted: {
         compPeak = loadKey("effects/compressor/peak", 0.2);
