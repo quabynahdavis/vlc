@@ -60,6 +60,14 @@ Rectangle {
     property real fxSaturation: 20.0
     property real fxSimilarity: 20.0
     property real fxSepia: 25.0
+    // FX toggle state (persisted via effects/videofx/* keys).
+    property bool fxExtract: false
+    property bool fxThreshold: false
+    property bool fxNegate: false
+    property bool fxPosterize: false
+    property bool fxGradient: false
+    property bool fxColor: false
+    property bool fxCartoon: false
     // Crop state.
     property int cropTop: 0
     property int cropBottom: 0
