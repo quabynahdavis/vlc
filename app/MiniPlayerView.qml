@@ -30,6 +30,8 @@ Window {
     signal playClicked
     signal prevClicked
     signal nextClicked
+    signal skipBackClicked
+    signal skipForwardClicked
     signal seekRequested(real seconds)
     signal volumeRequested(real level)
     signal muteToggled
@@ -111,6 +113,50 @@ Window {
                 }
             }
             onDoubleClicked: mini.restoreRequested()
+        }
+
+        // Thin scrubber at the top edge of the mini-player chrome.
+        Slider {
+            id: topScrubber
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 6
+            z: 5
+            from: mini.scrubFrom
+            to: Math.max(mini.scrubTo, mini.scrubFrom + 1)
+            value: mini.scrubValue
+            focusPolicy: Qt.StrongFocus
+            Accessible.role: Accessible.Slider
+            Accessible.name: qsTr("Seek")
+            Accessible.description: mini.elapsedText + " / " + mini.totalText
+            onMoved: mini.seekRequested(topScrubber.value)
+            background: Rectangle {
+                x: topScrubber.leftPadding
+                y: topScrubber.topPadding + topScrubber.availableHeight / 2 - height / 2
+                implicitWidth: 200
+                implicitHeight: 3
+                width: topScrubber.availableWidth
+                height: implicitHeight
+                radius: 1.5
+                color: Ds.Theme.border
+                Rectangle {
+                    width: topScrubber.visualPosition * parent.width
+                    height: parent.height
+                    radius: 1.5
+                    color: Ds.Theme.accent
+                }
+            }
+            handle: Rectangle {
+                x: topScrubber.leftPadding + topScrubber.visualPosition * (topScrubber.availableWidth - width)
+                y: topScrubber.topPadding + topScrubber.availableHeight / 2 - height / 2
+                implicitWidth: 8
+                implicitHeight: 8
+                radius: 4
+                color: Ds.Theme.accent
+                border.color: Ds.Theme.bgApp
+                visible: topScrubber.pressed || topScrubber.hovered
+            }
         }
 
         RowLayout {
@@ -263,6 +309,8 @@ Window {
                     onPlayClicked: mini.playClicked()
                     onPrevClicked: mini.prevClicked()
                     onNextClicked: mini.nextClicked()
+                    onSkipBackClicked: mini.skipBackClicked()
+                    onSkipForwardClicked: mini.skipForwardClicked()
                     onSeekRequested: (seconds) => mini.seekRequested(seconds)
                     onVolumeRequested: (level) => mini.volumeRequested(level)
                     onMuteToggled: mini.muteToggled()
