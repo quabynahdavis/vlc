@@ -79,7 +79,7 @@ ApplicationWindow {
     property bool isRecording: false
     property bool uiHidden: false
     property bool drawerOpen: true
-    property string activeNav: "files"
+    property string activeNav: "video"
     // M2: main view switch — Player (M1 stage + drawer) vs Library grid.
     property string currentView: "library"
     property real volumeLevel: 0.8
@@ -87,6 +87,7 @@ ApplicationWindow {
     // M3: settings / effects / subtitles panel state (transport opens them).
     property bool effectsOpen: false
     property bool subtitlesOpen: false
+    property bool queueOpen: false
 
     // M8 appearance.titleBar: Custom = frameless window + in-app TitleBar.qml;
     // System = native OS frame, TitleBar.qml hidden. Live binding so the
@@ -601,7 +602,7 @@ ApplicationWindow {
                 visible: !root.uiHidden
                 active: root.activeNav
                 onNavSelected: (nav) => {
-                    if (nav === "playlist") {
+                    if (nav === "discover" || nav === "playlist") {
                         root.activeNav = nav;
                         root.currentView = "player";
                         root.drawerOpen = true;
@@ -831,7 +832,7 @@ ApplicationWindow {
                 console.log("M3 subtitles panel (stub):", root.subtitlesOpen ? "open" : "closed");
             }
             onSettingsClicked: settingsDialog.openPage("general")
-            onQueueClicked: console.log("M1 queue (stub, lands in M2)")
+            onQueueClicked: root.queueOpen = !root.queueOpen
         }
     }
 
@@ -864,6 +865,19 @@ ApplicationWindow {
         visible: root.subtitlesOpen
         isOpen: root.subtitlesOpen
         onCloseRequested: root.subtitlesOpen = false
+    }
+
+    QueueView {
+        id: queueView
+        width: Ds.Theme.effectsWidth
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: root.customTitleBar ? Ds.Theme.titleBarHeight : 0
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Ds.Theme.transportHeight
+        visible: root.queueOpen
+        isOpen: root.queueOpen
+        onCloseRequested: root.queueOpen = false
     }
 
     PlayerContextMenu {
@@ -916,6 +930,8 @@ ApplicationWindow {
         onPlayClicked: root.togglePlay()
         onPrevClicked: root.prevItem()
         onNextClicked: root.nextItem()
+        onSkipBackClicked: root.seekTo(root.elapsedSec - 10)
+        onSkipForwardClicked: root.seekTo(root.elapsedSec + 10)
         onSeekRequested: (seconds) => root.seekTo(seconds)
         onVolumeRequested: (level) => {
             root.volumeLevel = level;

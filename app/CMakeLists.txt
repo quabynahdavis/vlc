@@ -95,6 +95,7 @@ qt_add_qml_module(vlc-redesign-m0
     GlobalSettingsDialog.qml
     EffectsDock.qml
     SubtitlesPanel.qml
+    QueueView.qml
     ToastHost.qml
     ErrorDialog.qml
     NetworkOpenDialog.qml
