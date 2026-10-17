@@ -26,16 +26,15 @@ Rectangle {
         Repeater {
             model: [
                 { nav: "home", icon: "home", tip: qsTr("Home") },
-                { nav: "files", icon: "files", tip: qsTr("Files") },
+                { nav: "video", icon: "files", tip: qsTr("Video") },
                 { nav: "music", icon: "music", tip: qsTr("Music") },
-                { nav: "radio", icon: "radio", tip: qsTr("Radio") },
-                { nav: "playlist", icon: "playlist", tip: qsTr("Playlists") },
-                { nav: "history", icon: "history", tip: qsTr("History") }
+                { nav: "browse", icon: "radio", tip: qsTr("Browse") },
+                { nav: "discover", icon: "playlist", tip: qsTr("Discover") }
             ]
             delegate: Item {
                 id: cell
                 Layout.fillWidth: true
-                Layout.preferredHeight: 44
+                Layout.preferredHeight: 62
                 required property var modelData
 
                 // Active marker: 3px accent bar.
@@ -58,11 +57,22 @@ Rectangle {
                     ToolTip.text: cell.modelData.tip
                     ToolTip.visible: hovered
                     onClicked: rail.navSelected(cell.modelData.nav)
-                    contentItem: Icon {
-                        name: cell.modelData.icon
-                        size: Ds.Theme.iconSize
-                        active: rail.active === cell.modelData.nav
+                    contentItem: ColumnLayout {
                         anchors.centerIn: parent
+                        spacing: 2
+                        Icon {
+                            Layout.alignment: Qt.AlignHCenter
+                            name: cell.modelData.icon
+                            size: Ds.Theme.iconSize
+                            active: rail.active === cell.modelData.nav
+                        }
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: cell.modelData.tip
+                            color: rail.active === cell.modelData.nav ? Ds.Theme.accent : Ds.Theme.textSecondary
+                            font.pixelSize: 10
+                            horizontalAlignment: Text.AlignHCenter
+                        }
                     }
                     background: Rectangle {
                         color: parent.hovered ? Ds.Theme.bgHover : "transparent"

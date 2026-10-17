@@ -182,7 +182,7 @@ QtObject {
     readonly property color iconAccent: "#AB6314"
 
     // Layout (px).
-    readonly property int railWidth: 60
+    readonly property int railWidth: 76
     readonly property int drawerWidth: 300
     readonly property int titleBarHeight: 40
     readonly property int transportHeight: 60
