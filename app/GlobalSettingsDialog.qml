@@ -256,7 +256,6 @@ Dialog {
                 StackLayout {
                     id: settingsStack
                     width: parent.width
-                    spacing: 20
                     currentIndex: dlg.pageIndex(dlg.activePage)
 
                     // ===== General page =====
