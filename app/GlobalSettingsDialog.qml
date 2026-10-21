@@ -261,7 +261,7 @@ Dialog {
                     // ===== General page =====
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "general"
+                        Layout.fillHeight: true
                         spacing: 18
 
                         Text {
@@ -862,13 +862,13 @@ Dialog {
                     // ===== Audio page =====
                     AudioSettingsPage {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "audio"
+                        Layout.fillHeight: true
                     }
 
                     // ===== Subtitles shortcut page =====
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "subtitles"
+                        Layout.fillHeight: true
                         spacing: 12
                         Text {
                             text: qsTr("Subtitles")
@@ -889,7 +889,7 @@ Dialog {
                     // cache controls, scan watcher stub, 60fps + 4K notes.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "performance"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Performance")
@@ -1016,7 +1016,7 @@ Dialog {
                     // the preference for the future network client.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "privacy"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Privacy")
@@ -1117,7 +1117,7 @@ Dialog {
                     // System/Custom row, then the mini-player trigger rows.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "interface"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Appearance")
@@ -1454,7 +1454,7 @@ Dialog {
                     // resume — all persisted via m8/playback/* keys.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "playback"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Playback")
@@ -1539,7 +1539,7 @@ Dialog {
                     // deinterlace, aspect ratio.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "video"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Video")
@@ -1646,7 +1646,7 @@ Dialog {
                     // list — rows mirror the wired Main.qml shortcuts.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "controls"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Controls")
@@ -1733,7 +1733,7 @@ Dialog {
                     // ===== Network page (M8 fix pass): cache + proxy.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "network"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Network")
@@ -1850,7 +1850,7 @@ Dialog {
                     // ===== Recording page (M8 fix pass): path + format.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "recording"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Recording")
@@ -1945,7 +1945,7 @@ Dialog {
                     // ===== Extensions page (M8 fix pass): list stub.
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "extensions"
+                        Layout.fillHeight: true
                         spacing: 14
                         Text {
                             text: qsTr("Extensions")
@@ -1993,7 +1993,7 @@ Dialog {
                     // ===== Library page: placeholder (not in the M8 pass).
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: dlg.activePage === "library"
+                        Layout.fillHeight: true
                         spacing: 12
                         Text {
                             text: dlg.pageTitle()
