@@ -404,8 +404,13 @@ ApplicationWindow {
             root.demoPosition = Math.max(0, Math.min(root.demoDuration, Math.floor(seconds)));
     }
 
+    MediaDevices {
+        id: mediaDevices
+    }
+
     AudioOutput {
         id: audioOut
+        device: mediaDevices.defaultAudioOutput
         volume: root.volumeLevel
         muted: root.muted
     }
